@@ -25,7 +25,7 @@ def authenticate() -> Tuple[Any, int]:
         sucesso, grupo = autenticar_usuario(database, username, password)
         
         if sucesso:
-            return jsonify({"success": True, "cdGrupo": grupo}), 200
+            return jsonify({"success": True, "dsProfile": grupo}), 200
         else:
             return jsonify({"success": False, "message": "Usuario ou senha invalidos"}), 401
             

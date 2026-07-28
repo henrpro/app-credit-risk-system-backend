@@ -25,7 +25,7 @@ def autenticar_usuario(database: str, username: str, password_attempt: str) -> T
     
     # Verifica se a senha confere
     if user_data.get('cdPassword') == password_attempt:
-        return True, user_data.get('cdGrupo')
+        return True, user_data.get('dsProfile')
     
     return False, None
 

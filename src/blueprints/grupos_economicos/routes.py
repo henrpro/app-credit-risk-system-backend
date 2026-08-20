@@ -1,10 +1,12 @@
 # Importações do projeto
-from bll.grupos_economicos.tratamentos import obtem_setores_distintos, obtem_subsetores_distintos, obtem_grupos_economicos_distintos, obtem_codigo_emissor_oc3, obtem_codigo_emissor_crims
-from models.models_grupos_economicos import GetSetoresModel, GetSubsetoresModel, GetGruposEconomicosDistintosModel, GetEmissoresOC3Model, GetEmissoresCRIMSModel
+from models.models_grupos_economicos import GetSetoresModel, GetSubsetoresModel, GetGruposEconomicosDistintosModel, GetEmissoresOC3Model, GetEmissoresCRIMSModel, GetGruposEconomicosModel
+from bll.grupos_economicos.tratamentos import obtem_grupo_economico, cadastrar_novo_grupo_economico
+from services.grupos_economicos.insumos import InsumosGruposEconomicos
 from utils.api_functions import apply_model_dataclass
 
 # Importações de bibliotecas
 from flask import Blueprint, jsonify, current_app, request
+import pandas as pd
 
 # Cria a blueprint
 grupos_economicos = Blueprint('grupos_economicos', __name__)
@@ -13,7 +15,7 @@ grupos_economicos = Blueprint('grupos_economicos', __name__)
 def obtem_setores_cadastrados():
     try:
         database = current_app.config['DATABASE']
-        df = obtem_setores_distintos(database)
+        df = InsumosGruposEconomicos.get_setores_distintos(database)
         dados = apply_model_dataclass(df, GetSetoresModel)
         return jsonify([ob.__dict__ for ob in dados])
     except Exception as e:
@@ -24,7 +26,7 @@ def obtem_setores_cadastrados():
 def obtem_subsetores_cadastrados():
     try:
         database = current_app.config['DATABASE']
-        df = obtem_subsetores_distintos(database)
+        df = InsumosGruposEconomicos.get_subsetores_distintos(database)
         dados = apply_model_dataclass(df, GetSubsetoresModel)
         return jsonify([ob.__dict__ for ob in dados])
     except Exception as e:
@@ -35,7 +37,7 @@ def obtem_subsetores_cadastrados():
 def obtem_grupos_economicos_cadastrados():
     try:
         database = current_app.config['DATABASE']
-        df = obtem_grupos_economicos_distintos(database)
+        df = InsumosGruposEconomicos.get_grupos_economicos_distintos(database)
         dados = apply_model_dataclass(df, GetGruposEconomicosDistintosModel)
         return jsonify([ob.__dict__ for ob in dados])
     except Exception as e:
@@ -46,7 +48,8 @@ def obtem_grupos_economicos_cadastrados():
 def obtem_emissores_oc3():
     try:
         filtros = request.args.to_dict()
-        df = obtem_codigo_emissor_oc3(filtros['dsEmissor'])
+        # df = InsumosGruposEconomicos.get_codigo_emissor_oc3(filtros['dsEmissor'])
+        df = pd.DataFrame({'cd_Emissor': ['RUMO', 'GASC', 'COSAN', 'TESOURO']})
         dados = apply_model_dataclass(df, GetEmissoresOC3Model)
         return jsonify([ob.__dict__ for ob in dados])
     except Exception as e:
@@ -57,27 +60,33 @@ def obtem_emissores_oc3():
 def obtem_emissores_crims():
     try:
         filtros = request.args.to_dict()
-        df = obtem_codigo_emissor_crims(filtros['dsEmissor'])
+        # df = InsumosGruposEconomicos.get_codigo_emissor_crims(filtros['dsEmissor'])
+        df = pd.DataFrame({'cd_Emissor': ['RUMO', 'GASC', 'COSAN', 'TESOURO']})
         dados = apply_model_dataclass(df, GetEmissoresCRIMSModel)
         return jsonify([ob.__dict__ for ob in dados])
     except Exception as e:
         return jsonify({'Erro ao obter os emissores CRIMS': str(e)}), 500
 
 
-@grupos_economicos.route('/consultar-grupo-conomico', methods=['POST'])
+@grupos_economicos.route('/consultar-grupo-conomico', methods=['GET'])
 def consultar_grupo_economico():
     try:
-        pass
-            
+        database = current_app.config['DATABASE']
+        filtros = request.args.to_dict()
+        df = obtem_grupo_economico(database, filtros['dsGrupo'])
+        dados = apply_model_dataclass(df, GetGruposEconomicosModel)
+        return jsonify([ob.__dict__ for ob in dados])
     except Exception as e:
-        return jsonify({'Erro ao consultar novo grupo economico': str(e)}), 500
+        return jsonify({'Erro ao consultar grupo economico': str(e)}), 500
 
-    
+
 @grupos_economicos.route('/registrar-grupo-economico', methods=['POST'])
 def registrar_grupo_economico():
     try:
-        pass
-            
+        database = current_app.config['DATABASE']
+        payload = request.json
+        cadastrar_novo_grupo_economico(database, payload)
+        return jsonify({'message': 'Grupo econômico registrado com sucesso.'}), 200
     except Exception as e:
         return jsonify({'Erro ao registrar novo grupo economico': str(e)}), 500
 
@@ -85,8 +94,12 @@ def registrar_grupo_economico():
 @grupos_economicos.route('/atualizar-grupo-economico', methods=['POST'])
 def atualizar_grupo_economico():
     try:
-        pass
-            
+        database = current_app.config['DATABASE']
+        payload = request.json
+        id_grupo = InsumosGruposEconomicos.get_id_grupo_by_name(database, payload.get('dsGrupo'))
+        InsumosGruposEconomicos.deletar_grupo_completo(database, id_grupo)
+
+        return jsonify({'message': 'Grupo econômico atualizado com sucesso.'}), 200
     except Exception as e:
         return jsonify({'Erro ao atualizar cadastro do grupo economico': str(e)}), 500
 
@@ -94,7 +107,10 @@ def atualizar_grupo_economico():
 @grupos_economicos.route('/deletar-grupo-economico', methods=['POST'])
 def deletar_grupo_economico():
     try:
-        pass
-            
+        database = current_app.config['DATABASE']
+        payload = request.json
+        id_grupo = InsumosGruposEconomicos.get_id_grupo_by_name(database, payload.get('dsGrupo'))
+        InsumosGruposEconomicos.deletar_grupo_completo(database, id_grupo)
+        return jsonify({'message': 'Grupo econômico deletado com sucesso.'}), 200
     except Exception as e:
         return jsonify({'Erro ao deletar grupo economico': str(e)}), 500

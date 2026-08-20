@@ -1,52 +1,9 @@
 # Importações do projeto
-from models.models_grupos_economicos import GetSetoresModel, GetSubsetoresModel, GetGruposEconomicosDistintosModel, GetGruposEconomicosModel
 from services.grupos_economicos.insumos import InsumosGruposEconomicos
 from utils.api_functions import apply_model_dataclass
 
-
 # Importações de bibliotecas
 import pandas as pd
-
-
-def obtem_setores_distintos(database: str):
-    """
-    Função que busca todos os setores cadastrados no banco de dados.
-    """
-    return InsumosGruposEconomicos.get_setores_distintos(database)
-
-
-def obtem_subsetores_distintos(database: str):
-    """
-    Função que busca todos os subsetores cadastrados no banco de dados.
-    """
-    return InsumosGruposEconomicos.get_subsetores_distintos(database)
-
-
-def obtem_grupos_economicos_distintos(database: str):
-    """
-    Função que obtem a lista de grupos econômicos distintos cadastrados na ferramenta
-    """
-    return InsumosGruposEconomicos.get_grupos_economicos_distintos(database)
-
-
-def obtem_codigo_emissor_oc3(emissor: str):
-    """
-    Função que obtem a lista de emissores OC3 com nome similar ao chamado.
-    """
-    # return InsumosGruposEconomicos.get_codigo_emissor_oc3(emissor)
-    return pd.DataFrame({
-        'cd_Emissor': ['RUMO', 'GASC', 'COSAN', 'TESOURO']
-    })
-
-
-def obtem_codigo_emissor_crims(emissor: str):
-    """
-    Função que obtem a lista de emissores CRIMS com nome similar ao chamado.
-    """
-    # return InsumosGruposEconomicos.get_codigo_emissor_crims(emissor)
-    return pd.DataFrame({
-        'cd_Emissor': ['RUMO', 'GASC', 'COSAN', 'TESOURO']
-    })
 
 
 def obtem_grupo_economico(database: str, grupo: str):
@@ -54,34 +11,186 @@ def obtem_grupo_economico(database: str, grupo: str):
     """
     Função que obtem a estrutura de um determinado grupo economico no banco de dados
     """
+    
+    lista_emissores = []
 
     # Começamos obtendo o grupo e seus emissores
     df = InsumosGruposEconomicos.get_grupo_economico(database, grupo)
 
     # Para cada emissor do grupo pegamos os códigos OC3 e CRIMS associados ao emissor e os ativos que consomem do emissor
     for idx, row in df.iterrows():
-        codigos_oc3 = InsumosGruposEconomicos.get_emissores_oc3(database, row['idEmissor'])
-        codigos_crims = InsumosGruposEconomicos.get_emissores_crims(database, row['idEmissor'])
+        codigos_oc3 = InsumosGruposEconomicos.get_emissores_oc3_by_emissor(database, row['idEmissor'])
+        codigos_crims = InsumosGruposEconomicos.get_emissores_crims_by_emissor(database, row['idEmissor'])
         ativos = InsumosGruposEconomicos.get_ativos_consumo(database, row['idEmissor'])
+        
+        # Estrutura de dados conforme GetGruposEconomicosModel
+        lista_emissores.append({
+            'dsGrupo': row.get('dsGrupo', ''),
+            'cdCnpj': row.get('cdCnpj', ''),
+            'idEmissor': row.get('idEmissor', 0),
+            'dsEmissor': row.get('dsEmissor', ''),
+            'cdEmissoresOC3': codigos_oc3['cdEmissorOC3'].tolist() if not codigos_oc3.empty else [],
+            'cdEmissoresCRIMS': codigos_crims['cdEmissorCRIMS'].tolist() if not codigos_crims.empty else [],
+            'cdAtivosConsumos': dict(zip(ativos['cdAtivo'], ativos['vlPcConsumo'])) if not ativos.empty else {},
+            'icHolding': row.get('icHolding', 0),
+            'icConsomeHolding': row.get('icConsomeHolding', 0),
+            'idEmissorHoldingConsumo': row.get('idEmissorHoldingConsumo', 0),
+            'dsSetor': row.get('dsSetor', ''),
+            'dsSubsetor': row.get('dsSubsetor', '')
+        })
+        
+    return pd.DataFrame(lista_emissores)
 
 
-
-def registrar_grupo_economico():
+def cadastrar_novo_grupo_economico(database: str, payload: dict):
 
     """
-    Função que registra um grupo econômico novo no banco de dados
+    Função que realiza o cadastro de um novo grupo econômico no banco de dados.
     """
 
+    try:
+        # Extrai os dados do payload
+        ds_grupo = payload.get('dsGrupo', '').strip()
+        emissores = payload.get('emissores', [])
+        
+        # 1. Verifica se o grupo já existe
+        if InsumosGruposEconomicos.get_id_grupo_by_name(database, ds_grupo):
+            raise ValueError(f"Já existe um grupo econômico cadastrado com o nome '{ds_grupo}'.")
+            
+        # 2. Verifica se os emissores já existem (por nome ou CNPJ)
+        for emissor in emissores:
+            nome = emissor.get('dsEmissor', '').strip()
+            cnpj = emissor.get('cdCnpj', '').strip() if emissor.get('cdCnpj') else None
+            
+            if InsumosGruposEconomicos.get_emissor_by_name(database, nome):
+                raise ValueError(f"Já existe um emissor cadastrado com o nome '{nome}'.")
+                
+            if cnpj:
+                if InsumosGruposEconomicos.get_emissor_by_cnpj(database, cnpj):
+                    raise ValueError(f"Já existe um emissor cadastrado com o CNPJ '{cnpj}'.")
 
-def atualizar_grupo_economico():
+        # Começamos criando um novo id e inserindo o grupo
+        id_grupo = InsumosGruposEconomicos.get_max_id_grupo(database) + 1
+        
+        # Inserimos o grupo econômico no banco de dados
+        InsumosGruposEconomicos.execute_insert_grupo_economico(database, id_grupo, ds_grupo)
+
+        # Buscamos a lista de emissores e o max id emissor
+        max_id_emissor = InsumosGruposEconomicos.get_max_id_emissor(database)
+
+        for emissor in emissores:
+            max_id_emissor += 1
+
+            # Buscamos o idSetor e o idSubsetor para os valores recebidos
+            id_setor = InsumosGruposEconomicos.get_id_setor_by_name(database, emissor.get('dsSetor')) if emissor.get('dsSetor') else None
+            id_subsetor = InsumosGruposEconomicos.get_id_subsetor_by_name(database, emissor.get('dsSubsetor')) if emissor.get('dsSubsetor') else None
+            
+            # Inserimos o emissor na tabela de cadastro de emissores
+            InsumosGruposEconomicos.execute_insert_emissor(
+                database, 
+                max_id_emissor, 
+                emissor.get('cdCnpj', ''), 
+                emissor.get('dsEmissor', ''), 
+                emissor.get('icHolding', 0), 
+                emissor.get('icConsomeHolding', 0), 
+                None, 
+                id_grupo, 
+                id_setor, 
+                id_subsetor
+            )
+            
+            # Inserimos os emissores OC3 e CRIMS associados ao emissor
+            for oc3 in emissor.get('cdEmissoresOC3', []):
+                InsumosGruposEconomicos.execute_insert_emissor_oc3(database, max_id_emissor, oc3)
+            for crims in emissor.get('cdEmissoresCRIMS', []):
+                InsumosGruposEconomicos.execute_insert_emissor_crims(database, max_id_emissor, crims)
+                
+        # Segunda passagem para atualizar a holding após todos os emissores existirem
+        for emissor in emissores:
+            emissor_holding = emissor.get('dsEmissorHoldingConsumo')
+            id_emissor_holding = InsumosGruposEconomicos.get_emissor_by_name(database, emissor_holding)
+            InsumosGruposEconomicos.execute_update_holding_consumo(database, emissor.get('dsEmissor', ''), id_emissor_holding)
+
+    except Exception as e:
+        raise e
+
+
+def update_grupo_economico(database: str, payload: dict):
 
     """
-
+    Função que atualiza os dados de um determinado grupo econômico
     """
 
+    try:
+        # Começamos extraindo os dados do payload e buscando o id_emissor
+        ds_grupo = payload.get('dsGrupo', '').strip()
+        emissores = payload.get('emissores', [])
+        id_grupo = InsumosGruposEconomicos.get_id_grupo_by_name(database, ds_grupo)
 
-def deletar_grupo_economico():
+        # Deletamos e inserimos o grupo econômico
+        InsumosGruposEconomicos.execute_delete_grupo_economico(database, id_grupo)
+        InsumosGruposEconomicos.execute_insert_grupo_economico(database, id_grupo, ds_grupo)
 
-    """
-    Deleta um grupo econômicos cadastrado
-    """
+        # Iteramos pelos emissores do grupo
+        for emissor in emissores:
+            nome = emissor.get('dsEmissor', '').strip()
+            cnpj = emissor.get('cdCnpj', '').strip() if emissor.get('cdCnpj') else None
+
+            # Buscamos o id_emissor
+            id_emissor = InsumosGruposEconomicos.get_emissor_by_name(database, nome)
+
+            # Se não existir buscamos o max id emissor
+            if not id_emissor:
+                id_emissor = InsumosGruposEconomicos.get_max_id_emissor(database) + 1
+
+            # Validamos se já existe algum emissor com este Cnpj
+            if cnpj:
+                id_existente_cnpj = InsumosGruposEconomicos.get_emissor_by_cnpj(database, cnpj)
+                if id_existente_cnpj and id_existente_cnpj != id_emissor:
+                    raise ValueError(f"Já existe um emissor cadastrado com o CNPJ '{cnpj}'.")
+
+            # Validamos se já existe algum emissor com este nome
+            id_existente_nome = InsumosGruposEconomicos.get_emissor_by_name(database, nome)
+            if id_existente_nome and id_existente_nome != id_emissor:
+                raise ValueError(f"Já existe um emissor cadastrado com o nome '{nome}'.")
+
+            # Buscamos o idSetor e o idSubsetor para os valores recebidos
+            id_setor = InsumosGruposEconomicos.get_id_setor_by_name(database, emissor.get('dsSetor')) if emissor.get('dsSetor') else None
+            id_subsetor = InsumosGruposEconomicos.get_id_subsetor_by_name(database, emissor.get('dsSubsetor')) if emissor.get('dsSubsetor') else None
+            
+            # Deletamos o emissor oc3, crims e cadastro antes de reinserir
+            InsumosGruposEconomicos.execute_delete_emissor_oc3(database, id_emissor)
+            InsumosGruposEconomicos.execute_delete_emissor_crims(database, id_emissor)
+            InsumosGruposEconomicos.execute_delete_emissor_cadastro(database, id_emissor)
+
+            # Excluímos e reinserimos o emissor
+            InsumosGruposEconomicos.execute_insert_emissor(
+                database, 
+                id_emissor, 
+                emissor.get('cdCnpj', ''), 
+                emissor.get('dsEmissor', ''), 
+                emissor.get('icHolding', 0), 
+                emissor.get('icConsomeHolding', 0), 
+                None, 
+                id_grupo, 
+                id_setor, 
+                id_subsetor
+            )
+
+            # Reinserimos o emissor oc3 e crims
+            for oc3 in emissor.get('cdEmissoresOC3', []):
+                InsumosGruposEconomicos.execute_insert_emissor_oc3(database, id_emissor, oc3)
+            for crims in emissor.get('cdEmissoresCRIMS', []):
+                InsumosGruposEconomicos.execute_insert_emissor_crims(database, id_emissor, crims)
+
+
+        # Segunda passagem para atualizar a holding após todos os emissores existirem
+        for emissor in emissores:
+            emissor_holding = emissor.get('dsEmissorHoldingConsumo')
+            if emissor_holding:
+                id_emissor_holding = InsumosGruposEconomicos.get_emissor_by_name(database, emissor_holding)
+                if id_emissor_holding:
+                    InsumosGruposEconomicos.execute_update_holding_consumo(database, emissor.get('dsEmissor', ''), id_emissor_holding)
+            
+    except Exception as e:
+        raise e

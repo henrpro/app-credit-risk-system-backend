@@ -4,6 +4,7 @@ from services.grupos_economicos.querys import *
 from services.connections import Connections
 
 # Importações de bibliotecas
+from sqlalchemy import text
 import pandas as pd
 
 class InsumosGruposEconomicos:
@@ -88,3 +89,190 @@ class InsumosGruposEconomicos:
                 return df
         except Exception as e:
             raise e
+
+    @classmethod
+    def get_id_setor_by_name(cls, database: str, ds_setor: str):
+        try:
+            with Connections.get_cnx_select(database) as cnx:
+                df = pd.read_sql(query_get_id_setor_by_name(database, ds_setor), cnx)
+                return int(df['idSetor'].iloc[0]) if not df.empty else None
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def get_id_subsetor_by_name(cls, database: str, ds_subsetor: str):
+        try:
+            with Connections.get_cnx_select(database) as cnx:
+                df = pd.read_sql(query_get_id_subsetor_by_name(database, ds_subsetor), cnx)
+                return int(df['idSubsetor'].iloc[0]) if not df.empty else None
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def get_emissor_by_name(cls, database: str, ds_emissor: str, exclude_id: int = None):
+        try:
+            with Connections.get_cnx_select(database) as cnx:
+                df = pd.read_sql(query_get_id_emissor_by_name(database, ds_emissor, exclude_id), cnx)
+                return int(df['idEmissor'].iloc[0]) if not df.empty else None
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def get_emissor_by_cnpj(cls, database: str, cd_cnpj: str, exclude_id: int = None):
+        try:
+            with Connections.get_cnx_select(database) as cnx:
+                df = pd.read_sql(query_get_id_emissor_by_cnpj(database, cd_cnpj, exclude_id), cnx)
+                return int(df['idEmissor'].iloc[0]) if not df.empty else None
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def get_id_grupo_by_name(cls, database: str, ds_grupo: str, exclude_id: int = None):
+        try:
+            with Connections.get_cnx_select(database) as cnx:
+                df = pd.read_sql(query_get_id_grupo_by_name(database, ds_grupo, exclude_id), cnx)
+                return int(df['idGrupo'].iloc[0]) if not df.empty else None
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def execute_delete_grupo_economico(cls, database: str, id_grupo: int):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_delete_grupo_economico_cadastro(database, id_grupo)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()
+
+    @classmethod
+    def execute_delete_emissor_cadastro(cls, database: str, id_emissor: int):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_delete_emissor_cadastro(database, id_emissor)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()
+
+    @classmethod
+    def execute_delete_emissor_oc3(cls, database: str, id_emissor: int):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_delete_emissor_oc3(database, id_emissor)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()
+
+    @classmethod
+    def execute_delete_emissor_crims(cls, database: str, id_emissor: int):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_delete_emissor_crims(database, id_emissor)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()
+
+    @classmethod
+    def deletar_grupo_completo(cls, database: str, id_grupo: int):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_clear_holding_consumo_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_emissores_oc3_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_emissores_crims_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_emissores_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_grupo(database, id_grupo)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()
+
+    @classmethod
+    def get_max_id_grupo(cls, database: str):
+        try:
+            with Connections.get_cnx_select(database) as cnx:
+                df = pd.read_sql(query_get_max_id_grupo(database), cnx)
+                return int(df['max_id'].iloc[0]) if not df.empty else 0
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def get_max_id_emissor(cls, database: str):
+        try:
+            with Connections.get_cnx_select(database) as cnx:
+                df = pd.read_sql(query_get_max_id_emissor(database), cnx)
+                return int(df['max_id'].iloc[0]) if not df.empty else 0
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def execute_insert_grupo_economico(cls, database: str, id_grupo: int, ds_grupo: str):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_insert_grupo_economico(database, id_grupo, ds_grupo)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()
+
+    @classmethod
+    def execute_insert_emissor(cls, database: str, id_emissor: int, cd_cnpj: str, ds_emissor: str, ic_holding: int, ic_consome_holding: int, id_holding, id_grupo: int, id_setor: int, id_subsetor: int):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_insert_emissor(database, id_emissor, cd_cnpj, ds_emissor, ic_holding, ic_consome_holding, id_holding, id_grupo, id_setor, id_subsetor)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()
+
+    @classmethod
+    def execute_insert_emissor_oc3(cls, database: str, id_emissor: int, cd_oc3: str):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_insert_emissor_oc3(database, id_emissor, cd_oc3)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()
+
+    @classmethod
+    def execute_insert_emissor_crims(cls, database: str, id_emissor: int, cd_crims: str):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_insert_emissor_crims(database, id_emissor, cd_crims)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()
+
+    @classmethod
+    def execute_update_holding_consumo(cls, database: str, ds_emissor: str, id_holding: int):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_update_holding_consumo(database, ds_emissor, id_holding)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()

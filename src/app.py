@@ -1,6 +1,5 @@
 # Importações do projeto
 from blueprints.login.routes import login
-
 from config.config import init_config
 
 # Importações de bibliotecas

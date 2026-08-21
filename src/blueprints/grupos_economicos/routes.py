@@ -1,6 +1,6 @@
 # Importações do projeto
 from models.models_grupos_economicos import GetSetoresModel, GetSubsetoresModel, GetGruposEconomicosDistintosModel, GetEmissoresOC3Model, GetEmissoresCRIMSModel, GetGruposEconomicosModel
-from bll.grupos_economicos.tratamentos import obtem_grupo_economico, cadastrar_novo_grupo_economico
+from bll.grupos_economicos.tratamentos import obtem_grupo_economico, cadastrar_novo_grupo_economico, update_grupo_economico
 from services.grupos_economicos.insumos import InsumosGruposEconomicos
 from utils.api_functions import apply_model_dataclass
 
@@ -96,9 +96,7 @@ def atualizar_grupo_economico():
     try:
         database = current_app.config['DATABASE']
         payload = request.json
-        id_grupo = InsumosGruposEconomicos.get_id_grupo_by_name(database, payload.get('dsGrupo'))
-        InsumosGruposEconomicos.deletar_grupo_completo(database, id_grupo)
-
+        update_grupo_economico(database, payload)
         return jsonify({'message': 'Grupo econômico atualizado com sucesso.'}), 200
     except Exception as e:
         return jsonify({'Erro ao atualizar cadastro do grupo economico': str(e)}), 500

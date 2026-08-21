@@ -198,7 +198,8 @@ query_clear_holding_consumo_by_grupo = lambda database, id_grupo: f"""
 
 query_delete_emissores_oc3_by_grupo = lambda database, id_grupo: f"""
     
-    DELETE FROM {database}.dbo.tCRS_0007_EmissorOC3
+    DELETE 
+    FROM {database}.dbo.tCRS_0007_EmissorOC3
     WHERE idEmissor IN (SELECT idEmissor FROM {database}.dbo.tCRS_0006_EmissorCadastro WHERE idGrupo = {id_grupo})
 
 """
@@ -206,7 +207,8 @@ query_delete_emissores_oc3_by_grupo = lambda database, id_grupo: f"""
 
 query_delete_emissores_crims_by_grupo = lambda database, id_grupo: f"""
     
-    DELETE FROM {database}.dbo.tCRS_0008_EmissorCRIMS
+    DELETE 
+    FROM {database}.dbo.tCRS_0008_EmissorCRIMS
     WHERE idEmissor IN (SELECT idEmissor FROM {database}.dbo.tCRS_0006_EmissorCadastro WHERE idGrupo = {id_grupo})
 
 """
@@ -214,7 +216,8 @@ query_delete_emissores_crims_by_grupo = lambda database, id_grupo: f"""
 
 query_delete_emissores_by_grupo = lambda database, id_grupo: f"""
     
-    DELETE FROM {database}.dbo.tCRS_0006_EmissorCadastro
+    DELETE 
+    FROM {database}.dbo.tCRS_0006_EmissorCadastro
     WHERE idGrupo = {id_grupo}
 
 """
@@ -222,7 +225,8 @@ query_delete_emissores_by_grupo = lambda database, id_grupo: f"""
 
 query_delete_grupo = lambda database, id_grupo: f"""
 
-    DELETE FROM {database}.dbo.tCRS_0005_GrupoEconomicoCadastro
+    DELETE 
+    FROM {database}.dbo.tCRS_0005_GrupoEconomicoCadastro
     WHERE idGrupo = {id_grupo}
 
 """
@@ -230,21 +234,26 @@ query_delete_grupo = lambda database, id_grupo: f"""
 
 query_delete_emissor_oc3 = lambda database, id_emissor: f"""
 
-    DELETE FROM {database}.dbo.tCRS_0007_EmissorOC3
+    DELETE 
+    FROM {database}.dbo.tCRS_0007_EmissorOC3
     WHERE idEmissor = {id_emissor}
 
 """
 
 
 query_delete_emissor_crims = lambda database, id_emissor: f"""
-    DELETE FROM {database}.dbo.tCRS_0008_EmissorCRIMS
+
+    DELETE 
+    FROM {database}.dbo.tCRS_0008_EmissorCRIMS
     WHERE idEmissor = {id_emissor}
+
 """
 
 
 query_delete_emissor_cadastro = lambda database, id_emissor: f"""
 
-    DELETE FROM {database}.dbo.tCRS_0006_EmissorCadastro
+    DELETE 
+    FROM {database}.dbo.tCRS_0006_EmissorCadastro
     WHERE idEmissor = {id_emissor}
 
 """

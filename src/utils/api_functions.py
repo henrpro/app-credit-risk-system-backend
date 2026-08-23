@@ -11,17 +11,9 @@ def apply_model_dataclass(df: pd.DataFrame, model):
 
     """
     Função que aplica um modelo de dataclass em um DataFrame.
-    O retorno da função é uma lista de dicionários.
+    O retorno da função é uma lista de instâncias do modelo.
     """
     
     # Aplica o modelo de dataclass no DataFrame
-    df = [model(**df.iloc[i].to_dict()) for i in range(len(df))]
-
-    # Trata encoding de caracteres especiais
-    for ob in df:
-        for key, value in ob.__dict__.items():
-            if isinstance(value, str):
-                ob.__dict__[key] = normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
-    
-    return df
+    return [model(**df.iloc[i].to_dict()) for i in range(len(df))]
     

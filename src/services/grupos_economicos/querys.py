@@ -40,13 +40,14 @@ query_get_codigo_emissor_crims = lambda emissor: f"""
 query_get_grupo_economico = lambda database, grupo: f"""
 
     SELECT 
-        dsGrupo,
-        cdCnpj,
-        idEmissor,
-        dsEmissor,
-        icHolding,
-        icConsomeHolding,
-        idEmissorHoldingConsumo,
+        A.idGrupo,
+        A.dsGrupo,
+        B.cdCnpj,
+        B.idEmissor,
+        B.dsEmissor,
+        B.icHolding,
+        B.icConsomeHolding,
+        B.idEmissorHoldingConsumo,
         dsSetor,
         dsSubsetor
     FROM {database}.dbo.tCRS_0005_GrupoEconomicoCadastro A

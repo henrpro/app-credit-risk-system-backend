@@ -1,4 +1,5 @@
 # Importações do projeto
+from blueprints.grupos_economicos.routes import grupos_economicos
 from blueprints.login.routes import login
 from config.config import init_config
 
@@ -11,10 +12,13 @@ app = Flask(__name__)
 CORS(app)
 
 config = init_config()
+app.json.ensure_ascii = False
+app.config['JSON_AS_ASCII'] = False
 app.secret_key = config['secret_key']
 app.config['DATABASE'] = config['database']
 
 # Registra as blueprints
+app.register_blueprint(grupos_economicos, url_prefix='/v1/grupos-economicos')
 app.register_blueprint(login, url_prefix='/v1/login')
 
 # Inicia a aplicação

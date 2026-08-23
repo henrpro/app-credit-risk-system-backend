@@ -25,6 +25,7 @@ def obtem_grupo_economico(database: str, grupo: str):
         
         # Estrutura de dados conforme GetGruposEconomicosModel
         lista_emissores.append({
+            'idGrupo': row.get('idGrupo', ''),
             'dsGrupo': row.get('dsGrupo', ''),
             'cdCnpj': row.get('cdCnpj', ''),
             'idEmissor': row.get('idEmissor', 0),

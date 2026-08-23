@@ -27,6 +27,7 @@ class GetEmissoresCRIMSModel:
 
 @dataclass
 class GetGruposEconomicosModel:
+    idGrupo: int
     dsGrupo: str
     cdCnpj: str
     idEmissor: int

@@ -49,7 +49,11 @@ def obtem_emissores_oc3():
     try:
         filtros = request.args.to_dict()
         # df = InsumosGruposEconomicos.get_codigo_emissor_oc3(filtros['dsEmissor'])
-        df = pd.DataFrame({'cd_Emissor': ['RUMO', 'GASC', 'COSAN', 'TESOURO']})
+        df = pd.DataFrame({
+            'cdCnpj': ['12.345.678/0001-95', '98.765.432/0001-09', '11.223.344/0001-55', '55.443.322/0001-88'],
+            'cdEmissor': ['RUMO', 'GASC', 'COSAN', 'TESOURO'],
+            'dsEmissor': ['Rumo S.A.', 'Comgas', 'Cosan S.A.', 'Tesouro Nacional']
+        })
         dados = apply_model_dataclass(df, GetEmissoresOC3Model)
         return jsonify([ob.__dict__ for ob in dados])
     except Exception as e:
@@ -61,7 +65,11 @@ def obtem_emissores_crims():
     try:
         filtros = request.args.to_dict()
         # df = InsumosGruposEconomicos.get_codigo_emissor_crims(filtros['dsEmissor'])
-        df = pd.DataFrame({'cd_Emissor': ['RUMO', 'GASC', 'COSAN', 'TESOURO']})
+        df = pd.DataFrame({
+            'cdCnpj': ['12.345.678/0001-95', '98.765.432/0001-09', '11.223.344/0001-55', '55.443.322/0001-88'],
+            'cdEmissor': ['RUMO', 'GASC', 'COSAN', 'TESOURO'],
+            'dsEmissor': ['Rumo S.A.', 'Comgas', 'Cosan S.A.', 'Tesouro Nacional']
+        })
         dados = apply_model_dataclass(df, GetEmissoresCRIMSModel)
         return jsonify([ob.__dict__ for ob in dados])
     except Exception as e:

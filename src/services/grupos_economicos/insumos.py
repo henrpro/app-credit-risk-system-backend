@@ -1,5 +1,4 @@
 # Importações do projeto
-from src.services.grupos_economicos.querys import query_get_emissores_crims
 from services.grupos_economicos.querys import *
 from services.connections import Connections
 

@@ -15,11 +15,15 @@ class GetGruposEconomicosDistintosModel:
 
 @dataclass
 class GetEmissoresOC3Model:
+    cdCnpj: str
     cdEmissor: str
+    dsEmissor: str
 
 @dataclass
 class GetEmissoresCRIMSModel:
+    cdCnpj: str
     cdEmissor: str
+    dsEmissor: str
 
 @dataclass
 class GetGruposEconomicosModel:

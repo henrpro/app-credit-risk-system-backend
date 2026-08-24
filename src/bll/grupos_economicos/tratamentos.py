@@ -58,10 +58,9 @@ def cadastrar_novo_grupo_economico(database: str, payload: dict):
         if InsumosGruposEconomicos.get_id_grupo_by_name(database, ds_grupo):
             raise ValueError(f"Já existe um grupo econômico cadastrado com o nome '{ds_grupo}'.")
             
-        # 2. Verifica se os emissores já existem (por nome ou CNPJ)
+        # 2. Verifica se os emissores já existem
         for emissor in emissores:
             nome = emissor.get('dsEmissor', '').strip()
-            
             if InsumosGruposEconomicos.get_emissor_by_name(database, nome):
                 raise ValueError(f"Já existe um emissor cadastrado com o nome '{nome}'.")
 
@@ -103,9 +102,10 @@ def cadastrar_novo_grupo_economico(database: str, payload: dict):
                 
         # Segunda passagem para atualizar a holding após todos os emissores existirem
         for emissor in emissores:
+            id_emissor = InsumosGruposEconomicos.get_emissor_by_name(database, emissor.get('dsEmissor', '').strip())
             emissor_holding = emissor.get('dsEmissorHoldingConsumo')
-            id_emissor_holding = InsumosGruposEconomicos.get_emissor_by_name(database, emissor_holding)
-            InsumosGruposEconomicos.execute_update_holding_consumo(database, emissor.get('dsEmissor', ''), id_emissor_holding)
+            id_emissor_holding = InsumosGruposEconomicos.get_emissor_by_name(database, emissor_holding) if emissor_holding else None
+            InsumosGruposEconomicos.execute_update_holding_consumo(database, id_emissor, id_emissor_holding)
 
     except Exception as e:
         raise e
@@ -118,29 +118,49 @@ def update_grupo_economico(database: str, payload: dict):
     """
 
     try:
-        # Começamos extraindo os dados do payload e buscando o id_emissor
+        # Começamos extraindo os dados do payload
+        id_grupo = int(payload.get('idGrupo'))
         ds_grupo = payload.get('dsGrupo', '').strip()
         emissores = payload.get('emissores', [])
-        id_grupo = InsumosGruposEconomicos.get_id_grupo_by_name(database, ds_grupo)
+
+        # Validamos se já existe algum grupo com este nome em outro id
+        id_existente_nome = InsumosGruposEconomicos.get_id_grupo_by_name(database, ds_grupo, exclude_id=id_grupo)
+        if id_existente_nome:
+            raise ValueError(f"Já existe um grupo econômico cadastrado com o nome '{ds_grupo}'.")
 
         # Deletamos e inserimos o grupo econômico
         InsumosGruposEconomicos.execute_delete_grupo_economico(database, id_grupo)
         InsumosGruposEconomicos.execute_insert_grupo_economico(database, id_grupo, ds_grupo)
 
+        # Identificamos e deletamos os emissores removidos
+        ids_emissores_atuais = InsumosGruposEconomicos.get_ids_emissores_by_grupo(database, id_grupo)
+        ids_emissores_payload = [int(emissor.get('idEmissor')) for emissor in emissores if emissor.get('idEmissor')]
+        ids_para_deletar = set(ids_emissores_atuais) - set(ids_emissores_payload)
+
+        for id_emissor_del in ids_para_deletar:
+            InsumosGruposEconomicos.execute_delete_emissor_oc3(database, id_emissor_del)
+            InsumosGruposEconomicos.execute_delete_emissor_crims(database, id_emissor_del)
+            InsumosGruposEconomicos.execute_delete_emissor_cadastro(database, id_emissor_del)
+
+        # Buscamos o maior id emissor para o caso de novos emissores
+        max_id_emissor = InsumosGruposEconomicos.get_max_id_emissor(database)
+
         # Iteramos pelos emissores do grupo
         for emissor in emissores:
             nome = emissor.get('dsEmissor', '').strip()
+            id_emissor = emissor.get('idEmissor')
 
-            # Buscamos o id_emissor
-            id_emissor = InsumosGruposEconomicos.get_emissor_by_name(database, nome)
-
-            # Se não existir buscamos o max id emissor
+            # Se não existir id_emissor no payload, geramos um novo
             if not id_emissor:
-                id_emissor = InsumosGruposEconomicos.get_max_id_emissor(database) + 1
+                max_id_emissor += 1
+                id_emissor = max_id_emissor
+                emissor['idEmissor'] = id_emissor
+            else:
+                id_emissor = int(id_emissor)
 
-            # Validamos se já existe algum emissor com este nome
-            id_existente_nome = InsumosGruposEconomicos.get_emissor_by_name(database, nome)
-            if id_existente_nome and id_existente_nome != id_emissor:
+            # Validamos se já existe algum outro emissor com este nome
+            id_existente_nome = InsumosGruposEconomicos.get_emissor_by_name(database, nome, exclude_id=id_emissor)
+            if id_existente_nome:
                 raise ValueError(f"Já existe um emissor cadastrado com o nome '{nome}'.")
 
             # Buscamos o idSetor e o idSubsetor para os valores recebidos
@@ -152,12 +172,12 @@ def update_grupo_economico(database: str, payload: dict):
             InsumosGruposEconomicos.execute_delete_emissor_crims(database, id_emissor)
             InsumosGruposEconomicos.execute_delete_emissor_cadastro(database, id_emissor)
 
-            # Excluímos e reinserimos o emissor
+            # Inserimos o emissor
             InsumosGruposEconomicos.execute_insert_emissor(
                 database, 
                 id_emissor, 
                 emissor.get('cdCnpj', ''), 
-                emissor.get('dsEmissor', ''), 
+                nome, 
                 emissor.get('icHolding', 0), 
                 emissor.get('icConsomeHolding', 0), 
                 None, 
@@ -172,12 +192,16 @@ def update_grupo_economico(database: str, payload: dict):
             for crims in emissor.get('cdEmissoresCRIMS', []):
                 InsumosGruposEconomicos.execute_insert_emissor_crims(database, id_emissor, crims)
 
-
         # Segunda passagem para atualizar a holding após todos os emissores existirem
         for emissor in emissores:
-            emissor_holding = emissor.get('dsEmissorHoldingConsumo')
-            id_emissor_holding = InsumosGruposEconomicos.get_emissor_by_name(database, emissor_holding)
-            InsumosGruposEconomicos.execute_update_holding_consumo(database, emissor.get('dsEmissor', ''), id_emissor_holding)
+            id_emissor = int(emissor.get('idEmissor'))
+            id_emissor_holding = emissor.get('idEmissorHoldingConsumo')
+            if id_emissor_holding:
+                id_emissor_holding = int(id_emissor_holding)
+            else:
+                id_emissor_holding = None
+
+            InsumosGruposEconomicos.execute_update_holding_consumo(database, id_emissor, id_emissor_holding)
 
     except Exception as e:
         raise e

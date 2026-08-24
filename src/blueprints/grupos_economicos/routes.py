@@ -121,8 +121,7 @@ def deletar_grupo_economico():
     try:
         database = current_app.config['DATABASE']
         payload = request.json
-        id_grupo = InsumosGruposEconomicos.get_id_grupo_by_name(database, payload.get('dsGrupo'))
-        InsumosGruposEconomicos.deletar_grupo_completo(database, id_grupo)
+        InsumosGruposEconomicos.deletar_grupo_completo(database, payload.get('idGrupo'))
         return jsonify({'message': 'Grupo econômico deletado com sucesso.'}), 200
     except Exception as e:
         return jsonify({'Erro ao deletar grupo economico': str(e)}), 500

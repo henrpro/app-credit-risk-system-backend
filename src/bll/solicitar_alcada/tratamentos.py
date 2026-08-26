@@ -74,7 +74,7 @@ def realiza_insert_solicitacao_alcada(database: str, payload: dict):
         rating_grupo = payload.get('cdRatingGrupo')
         id_rating_grupo = mapeamento_ratings.get(rating_grupo) 
         vl_share_divida = payload.get('vlShareDivida')
-        vl_share_divida = float(vl_share_divida) if vl_share_divida not in (None, "") else None
+        vl_share_divida = float(vl_share_divida) / 100 if vl_share_divida not in (None, "") else None
 
         # Buscamos o max id solicitacao
         id_solicitacao = InsumosSolicitarAlcada.get_max_id_solicitacao(database) + 1
@@ -103,7 +103,7 @@ def realiza_insert_solicitacao_alcada(database: str, payload: dict):
             cd_rating_emissor = emissor.get('cdRating')
             id_rating_emissor = mapeamento_ratings.get(cd_rating_emissor)
             vl_share_divida_emissor = emissor.get('vlShareDivida')
-            vl_share_divida_emissor = float(vl_share_divida_emissor) if vl_share_divida_emissor not in (None, "") else None
+            vl_share_divida_emissor = float(vl_share_divida_emissor) / 100 if vl_share_divida_emissor not in (None, "") else None
             ic_runoff = emissor.get('icRunOff', 0)
 
             # Inserção das linhas de limite solicitadas para o emissor

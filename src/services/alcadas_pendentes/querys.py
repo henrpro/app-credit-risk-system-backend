@@ -15,6 +15,56 @@ query_get_alcadas_pendentes = lambda database: f"""
 
 """
 
+query_get_detalhes_solicitacao = lambda database, idsolicitacao: f"""
+
+    SELECT 
+        G.dsTipoEvento,
+        dsGrupo,
+        f.cdRating AS cdRatingGrupo,
+        B.vlShareDivida AS vlShareDividaGrupo,
+        dsEmissor,
+        E.cdRating AS cdRatingEmissor,
+        icRunOff,
+        A.vlShareDivida AS vlShareDividaEmissor,
+        vlPrazo,
+        vlTerceiros,
+        vlReservaTecnica
+    FROM {database}.dbo.tCRS_0019_SolicitacoesAlcadaDescricao A
+    LEFT JOIN {database}.dbo.tCRS_0018_SolicitacoesAlcada B ON A.idSolicitacao = B.idSolicitacao
+    LEFT JOIN {database}.dbo.tCRS_0005_GrupoEconomicoCadastro C ON B.idGrupo = C.idGrupo
+    LEFT JOIN {database}.dbo.tCRS_0006_EmissorCadastro D ON A.idEmissor = D.idEmissor
+    LEFT JOIN {database}.dbo.tCRS_0016_RatingsDistintosCadastro E ON A.idRating = E.idRating
+    LEFT JOIN {database}.dbo.tCRS_0016_RatingsDistintosCadastro F ON B.idRatingGrupo = F.idRating
+    LEFT JOIN {database}.dbo.tCRS_0015_TipoEventoCadastro G ON B.idTipoEvento = G.idTipoEvento
+    WHERE A.idSolicitacao = {idsolicitacao}
+
+"""
+
+query_get_detalhes_limite_meta_solicitacao = lambda database, idsolicitacao: f"""
+
+    SELECT 
+        G.dsTipoEvento,
+        dsGrupo,
+        f.cdRating AS cdRatingGrupo,
+        B.vlShareDivida AS vlShareDividaGrupo,
+        dsEmissor,
+        E.cdRating AS cdRatingEmissor,
+        icRunOff,
+        A.vlShareDivida AS vlShareDividaEmissor,
+        vlPrazo,
+        vlTerceiros,
+        vlReservaTecnica
+    FROM {database}.dbo.tCRS_0019_SolicitacoesAlcadaDescricao A
+    LEFT JOIN {database}.dbo.tCRS_0020_SolicitacoesAlcadaLimiteMetaDescricao B ON A.idSolicitacao = B.idSolicitacao
+    LEFT JOIN {database}.dbo.tCRS_0005_GrupoEconomicoCadastro C ON B.idGrupo = C.idGrupo
+    LEFT JOIN {database}.dbo.tCRS_0006_EmissorCadastro D ON A.idEmissor = D.idEmissor
+    LEFT JOIN {database}.dbo.tCRS_0016_RatingsDistintosCadastro E ON A.idRating = E.idRating
+    LEFT JOIN {database}.dbo.tCRS_0016_RatingsDistintosCadastro F ON B.idRatingGrupo = F.idRating
+    LEFT JOIN {database}.dbo.tCRS_0015_TipoEventoCadastro G ON B.idTipoEvento = G.idTipoEvento
+    WHERE A.idSolicitacao = {idsolicitacao}
+
+"""
+
 query_get_limites_vigentes = lambda database, grupo: f"""
 
     SELECT 

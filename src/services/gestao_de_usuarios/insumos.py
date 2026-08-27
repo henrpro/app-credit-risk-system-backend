@@ -12,7 +12,7 @@ class InsumosGestaoUsuarios:
     # _______________________________ Geral _______________________________
 
     @classmethod
-    def get_usuarios_cadastrados(cls, database: str):
+    def get_usuarios_cadastrados(cls, database: str) -> pd.DataFrame:
         try:
             with Connections.get_cnx_select(database) as cnx:
                 df = pd.read_sql(query_get_usuarios_cadastrados(database), cnx)
@@ -21,7 +21,7 @@ class InsumosGestaoUsuarios:
             raise e
 
     @classmethod
-    def get_usuario(cls, database: str, user: str):
+    def get_usuario(cls, database: str, user: str) -> pd.DataFrame:
         try:
             with Connections.get_cnx_select(database) as cnx:
                 df = pd.read_sql(query_get_usuario(database, user), cnx)
@@ -30,7 +30,16 @@ class InsumosGestaoUsuarios:
             raise e
 
     @classmethod
-    def get_id_profile(cls, database: str, profile: str):
+    def get_profiles(cls, database: str) -> pd.DataFrame:
+        try:
+            with Connections.get_cnx_select(database) as cnx:
+                df = pd.read_sql(query_get_profiles(database), cnx)
+                return df
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def get_id_profile(cls, database: str, profile: str) -> int:
         try:
             with Connections.get_cnx_select(database) as cnx:
                 df = pd.read_sql(query_get_id_profile(database, profile), cnx)
@@ -41,7 +50,16 @@ class InsumosGestaoUsuarios:
     # _______________________________ Execução SQL _______________________________
 
     @classmethod
-    def execute_insert_usuario(cls, database: str, user: str, nome: str, password: str, idprofile: int, aprovador: str = None, peso: float = None):
+    def execute_insert_usuario(
+        cls,
+        database: str,
+        user: str,
+        nome: str,
+        password: str,
+        idprofile: int,
+        aprovador: str = None,
+        peso: float = None
+    ):
         engine, cnx = Connections.get_cnx_insert(database)
         try:
             with cnx.begin():

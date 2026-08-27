@@ -12,7 +12,25 @@ class InsumosSolicitarAlcada:
     # _______________________________ Geral _______________________________
 
     @classmethod
-    def get_eventos_possiveis(cls, database: str):
+    def get_id_grupo_by_name(cls, database: str, grupo: str) -> int:
+        try:
+            with Connections.get_cnx_select(database) as cnx:
+                df = pd.read_sql(query_get_id_grupo_by_name(database, grupo), cnx)
+                return int(df['idGrupo'].iloc[0]) if not df.empty else None
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def get_emissor_by_name(cls, database: str, emissor: str) -> int:
+        try:
+            with Connections.get_cnx_select(database) as cnx:
+                df = pd.read_sql(query_get_emissor_by_name(database, emissor), cnx)
+                return int(df['idEmissor'].iloc[0]) if not df.empty else None
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def get_eventos_possiveis(cls, database: str) -> pd.DataFrame:
         try:
             with Connections.get_cnx_select(database) as cnx:
                 df = pd.read_sql(query_get_eventos_possiveis(database), cnx)
@@ -21,7 +39,7 @@ class InsumosSolicitarAlcada:
             raise e
 
     @classmethod
-    def get_ratings_distintos(cls, database: str):
+    def get_ratings_distintos(cls, database: str) -> pd.DataFrame:
         try:
             with Connections.get_cnx_select(database) as cnx:
                 df = pd.read_sql(query_get_ratings_distintos(database), cnx)
@@ -30,7 +48,7 @@ class InsumosSolicitarAlcada:
             raise e
 
     @classmethod
-    def get_limites_aprovados_by_grupo(cls, database: str, grupo: str, mesa: str):
+    def get_limites_aprovados_by_grupo(cls, database: str, grupo: str, mesa: str) -> pd.DataFrame:
         try:
             with Connections.get_cnx_select(database) as cnx:
                 df = pd.read_sql(query_get_limites_aprovados_by_grupo(database, grupo, mesa), cnx)
@@ -39,7 +57,7 @@ class InsumosSolicitarAlcada:
             raise e
 
     @classmethod
-    def get_max_id_solicitacao(cls, database: str):
+    def get_max_id_solicitacao(cls, database: str) -> int:
         try:
             with Connections.get_cnx_select(database) as cnx:
                 df = pd.read_sql(query_get_max_id_solicitacao(database), cnx)
@@ -48,7 +66,7 @@ class InsumosSolicitarAlcada:
             raise e
 
     @classmethod
-    def get_prorrogacoes_recentes(cls, database: str, grupo: str, mesa: str):
+    def get_prorrogacoes_recentes(cls, database: str, grupo: str, mesa: str) -> pd.DataFrame:
         try:
             with Connections.get_cnx_select(database) as cnx:
                 df = pd.read_sql(query_get_prorrogacoes_recentes(database, grupo, mesa), cnx)
@@ -57,7 +75,7 @@ class InsumosSolicitarAlcada:
             raise e
 
     @classmethod
-    def get_disponivel_flexibilizacao(cls, database: str, grupo: str, mesa: str):
+    def get_disponivel_flexibilizacao(cls, database: str, grupo: str, mesa: str) -> pd.DataFrame:
         try:
             with Connections.get_cnx_select(database) as cnx:
                 df = pd.read_sql(query_get_disponivel_flexibilizacao(database, grupo, mesa), cnx)
@@ -65,38 +83,45 @@ class InsumosSolicitarAlcada:
         except Exception as e:
             raise e
 
-    # _______________________________ Insert _______________________________
+    # _______________________________ Execução SQL _______________________________
 
     @classmethod
-    def execute_insert_solicitacao_alcada(cls, database: str, id_solicitacao: int, dt_solicitacao: str, cd_user: str, ds_profile: str, id_grupo: int, id_rating_grupo: int, vl_share_divida: float, id_status: int, id_tipo_evento: int):
+    def execute_insert_solicitacao_completa(
+        cls,
+        database: str,
+        solicitacao_params: dict,
+        linhas_descricao_params: list
+    ):
         engine, cnx = Connections.get_cnx_insert(database)
         try:
             with cnx.begin():
-                cnx.execute(text(query_insert_solicitacao_alcada(database, id_solicitacao, dt_solicitacao, cd_user, ds_profile, id_grupo, id_rating_grupo, vl_share_divida, id_status, id_tipo_evento)))
-        except Exception as e:
-            raise e
-        finally:
-            cnx.close()
-            engine.dispose()
+                cnx.execute(text(query_insert_solicitacao_alcada(
+                    database=database,
+                    id_solicitacao=solicitacao_params['idSolicitacao'],
+                    dt_solicitacao=solicitacao_params['dtSolicitacao'],
+                    cd_user=solicitacao_params['cdUser'],
+                    cd_mesa=solicitacao_params['cdMesa'],
+                    id_grupo=solicitacao_params['idGrupo'],
+                    cd_rating_grupo=solicitacao_params['cdRatingGrupo'],
+                    vl_share_divida=solicitacao_params['vlShareDivida'],
+                    id_status=solicitacao_params['idStatus'],
+                    ds_tipo_evento=solicitacao_params['dsTipoEvento']
+                )))
 
-    @classmethod
-    def execute_insert_solicitacao_alcada_descricao(cls, database: str, id_solicitacao: int, id_emissor: int, id_rating: int, vl_prazo: float, vl_terceiros: float, vl_reserva_tecnica: float, ic_runoff: int, vl_share_divida: float):
-        engine, cnx = Connections.get_cnx_insert(database)
-        try:
-            with cnx.begin():
-                cnx.execute(text(query_insert_solicitacao_alcada_descricao(database, id_solicitacao, id_emissor, id_rating, vl_prazo, vl_terceiros, vl_reserva_tecnica, ic_runoff, vl_share_divida)))
-        except Exception as e:
-            raise e
-        finally:
-            cnx.close()
-            engine.dispose()
-
-    @classmethod
-    def execute_insert_solicitacao_alcada_limite_meta_descricao(cls, database: str, id_solicitacao: int, id_emissor: int, id_rating: int, vl_prazo: float, vl_terceiros: float, vl_reserva_tecnica: float, ic_runoff: int, vl_share_divida: float, dt_vencimento_limite_meta: str):
-        engine, cnx = Connections.get_cnx_insert(database)
-        try:
-            with cnx.begin():
-                cnx.execute(text(query_insert_solicitacao_alcada_limite_meta_descricao(database, id_solicitacao, id_emissor, id_rating, vl_prazo, vl_terceiros, vl_reserva_tecnica, ic_runoff, vl_share_divida, dt_vencimento_limite_meta)))
+                for item in linhas_descricao_params:
+                    cnx.execute(text(query_insert_solicitacao_alcada_descricao(
+                        database=database,
+                        id_solicitacao=item['idSolicitacao'],
+                        id_emissor=item['idEmissor'],
+                        cd_rating=item['cdRating'],
+                        vl_prazo=item['vlPrazo'],
+                        vl_terceiros=item['vlTerceiros'],
+                        vl_reserva_tecnica=item['vlReservaTecnica'],
+                        ic_runoff=item['icRunOff'],
+                        vl_share_divida=item['vlShareDivida'],
+                        ic_limite_meta=item['icLimiteMeta'],
+                        dt_vencimento_limite_meta=item['dtVencimentoLimiteMeta']
+                    )))
         except Exception as e:
             raise e
         finally:

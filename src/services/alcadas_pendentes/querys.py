@@ -40,6 +40,7 @@ query_get_detalhes_solicitacao_descricao = lambda database, ids_solicitacao_str:
 
     SELECT 
         A.idSolicitacao,
+        B.cdMesa,
         A.idEmissor,
         D.dsEmissor,
         A.cdRating AS cdRatingEmissor,
@@ -51,6 +52,7 @@ query_get_detalhes_solicitacao_descricao = lambda database, ids_solicitacao_str:
         A.icLimiteMeta,
         CAST(A.dtVencimentoLimiteMeta AS DATE) AS dtVencimentoLimiteMeta
     FROM {database}.dbo.tCRS_0017_SolicitacoesAlcadaDescricao A
+    LEFT JOIN {database}.dbo.tCRS_0016_SolicitacoesAlcada B ON A.idSolicitacao = B.idSolicitacao
     LEFT JOIN {database}.dbo.tCRS_0007_EmissorCadastro D ON A.idEmissor = D.idEmissor
     WHERE A.idSolicitacao IN ({ids_solicitacao_str})
 

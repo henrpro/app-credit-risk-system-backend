@@ -1,17 +1,32 @@
-
 # _______________________________ Geral _______________________________
+
+query_get_id_grupo_by_name = lambda database, grupo: f"""
+
+    SELECT idGrupo 
+    FROM {database}.dbo.tCRS_0006_GrupoEconomicoCadastro 
+    WHERE dsGrupo = '{grupo}'
+
+"""
+
+query_get_emissor_by_name = lambda database, emissor: f"""
+
+    SELECT idEmissor 
+    FROM {database}.dbo.tCRS_0007_EmissorCadastro 
+    WHERE dsEmissor = '{emissor}'
+
+"""
 
 query_get_eventos_possiveis = lambda database: f"""
 
     SELECT *
-    FROM {database}.dbo.tCRS_0015_TipoEventoCadastro
+    FROM {database}.dbo.tCRS_0013_TipoEvento
 
 """
 
 query_get_ratings_distintos = lambda database: f"""
 
     SELECT *
-    FROM {database}.dbo.tCRS_0016_RatingsDistintosCadastro
+    FROM {database}.dbo.tCRS_0014_RatingsDistintos
 
 """
 
@@ -27,50 +42,48 @@ query_get_limites_aprovados_by_grupo = lambda database, grupo, mesa: f"""
         C.vlReservaTecnica,
         F.cdRating AS cdRatingGrupo,
         G.cdRating As cdRatingEmissor
-    FROM {database}.dbo.tCRS_0005_GrupoEconomicoCadastro A
-    LEFT JOIN {database}.dbo.tCRS_0006_EmissorCadastro B ON A.idGrupo = B.idGrupo
+    FROM {database}.dbo.tCRS_0006_GrupoEconomicoCadastro A
+    LEFT JOIN {database}.dbo.tCRS_0007_EmissorCadastro B ON A.idGrupo = B.idGrupo
     LEFT JOIN (
         SELECT *
-        FROM {database}.dbo.tCRS_0023_LimitesVigentes
+        FROM {database}.dbo.tCRS_0020_LimitesVigentes
         WHERE cdMesa = '{mesa}'
     ) C ON B.idEmissor = C.idEmissor
-    LEFT JOIN {database}.dbo.tCRS_0026_RatingsVigentesGrupo D ON A.idGrupo = D.idGrupo
-    LEFT JOIN {database}.dbo.tCRS_0027_RatingsVigentesEmissor E ON B.idEmissor = E.idEmissor
-    LEFT JOIN {database}.dbo.tCRS_0016_RatingsDistintosCadastro F ON D.idRating = F.idRating
-    LEFT JOIN {database}.dbo.tCRS_0016_RatingsDistintosCadastro G ON E.idRating = G.idRating
-    WHERE dsGrupo = '{grupo}'
-    AND B.icConsomeHolding = 0
+    LEFT JOIN {database}.dbo.tCRS_0024_RatingsVigentesGrupo D ON A.idGrupo = D.idGrupo
+    LEFT JOIN {database}.dbo.tCRS_0025_RatingsVigentesEmissor E ON B.idEmissor = E.idEmissor
+    LEFT JOIN {database}.dbo.tCRS_0014_RatingsDistintos F ON D.cdRatingGrupo = F.cdRating
+    LEFT JOIN {database}.dbo.tCRS_0014_RatingsDistintos G ON E.cdRating = G.cdRating
+    WHERE A.dsGrupo = '{grupo}'
+      AND B.icConsomeHolding = 0
 
 """
 
 query_get_max_id_solicitacao = lambda database: f"""
 
-    SELECT ISNULL(MAX(idSolicitacao), 0) as max_id 
-    FROM {database}.dbo.tCRS_0018_SolicitacoesAlcada
+    SELECT ISNULL(MAX(idSolicitacao), 0) AS max_id 
+    FROM {database}.dbo.tCRS_0016_SolicitacoesAlcada
 
 """
 
 query_get_prorrogacoes_recentes = lambda database, grupo, mesa: f"""
 
     SELECT *
-    FROM {database}.dbo.tCRS_0005_GrupoEconomicoCadastro A
-    LEFT JOIN {database}.dbo.tCRS_0018_SolicitacoesAlcada B ON A.idGrupo = B.idGrupo
-    LEFT JOIN {database}.dbo.tCRS_0017_StatusCadastro C ON B.idStatus = C.idStatus
-    LEFT JOIN {database}.dbo.tCRS_0015_TipoEventoCadastro D ON B.idTipoEvento = D.idTipoEvento
-    WHERE dsTipoEvento = 'Prorrogação'
-    AND dsStatus = 'Aprovado'
-    AND dsGrupo = '{grupo}'
-    AND dsProfile = '{mesa}'
-    AND dtSolicitacao >= (
-        SELECT MAX(dtAprovacao)
-        FROM {database}.dbo.tCRS_0022_LimitesAprovadosHistorico A
-        LEFT JOIN {database}.dbo.tCRS_0018_SolicitacoesAlcada B ON A.idSolicitacao = B.idSolicitacao
-        LEFT JOIN {database}.dbo.tCRS_0015_TipoEventoCadastro C ON B.idTipoEvento = C.idTipoEvento
-        LEFT JOIN {database}.dbo.tCRS_0005_GrupoEconomicoCadastro D ON A.idGrupo = D.idGrupo
-        WHERE A.cdMesa = '{mesa}'
-        AND D.dsGrupo = '{grupo}'
-        AND C.dsTipoEvento IN ('Abertura de Limite', 'Renovação', 'Renovação com Downgrade de Rating', 'Renovação com Upgrade de Rating', 'Renovação com Downgrade de Rating + Run-Off', 'Renovação com Upgrade de Rating + Run-Off')
-    )
+    FROM {database}.dbo.tCRS_0006_GrupoEconomicoCadastro A
+    LEFT JOIN {database}.dbo.tCRS_0016_SolicitacoesAlcada B ON A.idGrupo = B.idGrupo
+    LEFT JOIN {database}.dbo.tCRS_0015_StatusAlcada C ON B.idStatus = C.idStatus
+    WHERE B.dsTipoEvento = 'Prorrogação'
+      AND C.dsStatus = 'Aprovado'
+      AND A.dsGrupo = '{grupo}'
+      AND B.cdMesa = '{mesa}'
+      AND B.dtSolicitacao >= (
+          SELECT MAX(A.dtAprovacao)
+          FROM {database}.dbo.tCRS_0019_LimitesAprovadosHistorico A
+          LEFT JOIN {database}.dbo.tCRS_0016_SolicitacoesAlcada B ON A.idSolicitacao = B.idSolicitacao
+          LEFT JOIN {database}.dbo.tCRS_0006_GrupoEconomicoCadastro D ON A.idGrupo = D.idGrupo
+          WHERE A.cdMesa = '{mesa}'
+            AND D.dsGrupo = '{grupo}'
+            AND B.dsTipoEvento IN ('Abertura de Limite', 'Renovação', 'Renovação com Downgrade de Rating', 'Renovação com Upgrade de Rating', 'Renovação com Downgrade de Rating + Run-Off', 'Renovação com Upgrade de Rating + Run-Off')
+      )
 
 """
 
@@ -82,93 +95,70 @@ query_get_disponivel_flexibilizacao = lambda database, grupo, mesa: f"""
         B.idGrupo,
         C.dsGrupo,
         A.vlPrazo,
-        (vlLimite - vlFlexibilizado) AS vlDisponivelFlex
-    FROM {database}.dbo.tCRS_0028_FlexibilizacaoConsumo A
-    LEFT JOIN {database}.dbo.tCRS_0006_EmissorCadastro B ON A.idEmissor = B.idEmissor
-    LEFT JOIN {database}.dbo.tCRS_0005_GrupoEconomicoCadastro C ON B.idGrupo = C.idGrupo
-    WHERE dsGrupo = '{grupo}'
-    AND A.cdMesa = '{mesa}'
-    AND (vlLimite - vlFlexibilizado) > 0
+        (A.vlLimite - A.vlFlexibilizado) AS vlDisponivelFlex
+    FROM {database}.dbo.tCRS_0021_FlexibilizacaoConsumo A
+    LEFT JOIN {database}.dbo.tCRS_0007_EmissorCadastro B ON A.idEmissor = B.idEmissor
+    LEFT JOIN {database}.dbo.tCRS_0006_GrupoEconomicoCadastro C ON B.idGrupo = C.idGrupo
+    WHERE C.dsGrupo = '{grupo}'
+      AND A.cdMesa = '{mesa}'
+      AND (A.vlLimite - A.vlFlexibilizado) > 0
 
 """
 
 # _______________________________ Insert _______________________________
 
-query_insert_solicitacao_alcada = lambda database, id_solicitacao, dt_solicitacao, cd_user, ds_profile, id_grupo, id_rating_grupo, vl_share_divida, id_status, id_tipo_evento: f"""
+query_insert_solicitacao_alcada = lambda database, id_solicitacao, dt_solicitacao, cd_user, cd_mesa, id_grupo, cd_rating_grupo, vl_share_divida, id_status, ds_tipo_evento: f"""
 
-    INSERT INTO {database}.dbo.tCRS_0018_SolicitacoesAlcada (
+    INSERT INTO {database}.dbo.tCRS_0016_SolicitacoesAlcada (
         idSolicitacao,
         dtSolicitacao,
         cdUser,
-        dsProfile,
+        cdMesa,
         idGrupo,
-        idRatingGrupo,
+        cdRatingGrupo,
         vlShareDivida,
         idStatus,
-        idTipoEvento
+        dsTipoEvento
     )
     VALUES (
         {id_solicitacao},
-        {f"'{dt_solicitacao}'"},
-        {f"'{cd_user}'"},
-        {f"'{ds_profile}'"},
+        '{dt_solicitacao}',
+        '{cd_user}',
+        '{cd_mesa}',
         {id_grupo},
-        {id_rating_grupo if id_rating_grupo is not None else 'NULL'},
+        {f"'{cd_rating_grupo}'" if cd_rating_grupo is not None else 'NULL'},
         {vl_share_divida if vl_share_divida is not None else 'NULL'},
         {id_status},
-        {id_tipo_evento}
+        '{ds_tipo_evento}'
     )
 
 """
 
-query_insert_solicitacao_alcada_descricao = lambda database, id_solicitacao, id_emissor, id_rating, vl_prazo, vl_terceiros, vl_reserva_tecnica, ic_runoff, vl_share_divida: f"""
+query_insert_solicitacao_alcada_descricao = lambda database, id_solicitacao, id_emissor, cd_rating, vl_prazo, vl_terceiros, vl_reserva_tecnica, ic_runoff, vl_share_divida, ic_limite_meta, dt_vencimento_limite_meta: f"""
 
-    INSERT INTO {database}.dbo.tCRS_0019_SolicitacoesAlcadaDescricao (
+    INSERT INTO {database}.dbo.tCRS_0017_SolicitacoesAlcadaDescricao (
         idSolicitacao,
         idEmissor,
-        idRating,
-        vlPrazo,
-        vlTerceiros,
-        vlReservaTecnica,
-        icRunOff,
-        vlShareDivida
-    )
-    VALUES (
-        {id_solicitacao},
-        {id_emissor},
-        {id_rating if id_rating is not None else 'NULL'},
-        {vl_prazo},
-        {vl_terceiros},
-        {vl_reserva_tecnica},
-        {ic_runoff},
-        {vl_share_divida if vl_share_divida is not None else 'NULL'}
-    )
-
-"""
-
-query_insert_solicitacao_alcada_limite_meta_descricao = lambda database, id_solicitacao, id_emissor, id_rating, vl_prazo, vl_terceiros, vl_reserva_tecnica, ic_runoff, vl_share_divida, dt_vencimento_limite_meta: f"""
-
-    INSERT INTO {database}.dbo.tCRS_0020_SolicitacoesAlcadaLimiteMetaDescricao (
-        idSolicitacao,
-        idEmissor,
-        idRating,
+        cdRating,
         vlPrazo,
         vlTerceiros,
         vlReservaTecnica,
         icRunOff,
         vlShareDivida,
+        icLimiteMeta,
         dtVencimentoLimiteMeta
     )
     VALUES (
         {id_solicitacao},
         {id_emissor},
-        {id_rating if id_rating is not None else 'NULL'},
+        {f"'{cd_rating}'" if cd_rating is not None else 'NULL'},
         {vl_prazo},
         {vl_terceiros},
         {vl_reserva_tecnica},
         {ic_runoff},
         {vl_share_divida if vl_share_divida is not None else 'NULL'},
-        {f"'{dt_vencimento_limite_meta}'"}
+        {ic_limite_meta},
+        {f"'{dt_vencimento_limite_meta}'" if dt_vencimento_limite_meta is not None else 'NULL'}
     )
 
 """

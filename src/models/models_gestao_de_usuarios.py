@@ -17,3 +17,4 @@ class GetUsuariosModel:
     dsProfile: str
     dsAlcadaAprovador: Optional[str] = None
     vlPesoAprovacao: Optional[float] = None
+

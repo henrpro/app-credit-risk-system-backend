@@ -1,46 +1,62 @@
+# _______________________________ Geral _______________________________
+
 query_get_solicitacoes_finalizadas = lambda database, mesa: f"""
 
     SELECT
         A.idSolicitacao,
-        CAST(dtSolicitacao AS DATE) AS dtSolicitacao,
+        CAST(A.dtSolicitacao AS DATE) AS dtSolicitacao,
         E.dsNome,
-        A.dsProfile,
-        dsGrupo,
-        dsTipoEvento,
-        dsStatus,
+        A.cdMesa AS dsProfile,
+        B.dsGrupo,
+        A.dsTipoEvento,
+        C.dsStatus,
         F.dsAlcada
-    FROM {database}.dbo.tCRS_0018_SolicitacoesAlcada A
-    LEFT JOIN {database}.dbo.tCRS_0005_GrupoEconomicoCadastro B ON A.idGrupo = B.idGrupo
-    LEFT JOIN {database}.dbo.tCRS_0017_StatusCadastro C ON A.idStatus = C.idStatus 
-    LEFT JOIN {database}.dbo.tCRS_0015_TipoEventoCadastro D ON A.idTipoEvento = D.idTipoEvento
+    FROM {database}.dbo.tCRS_0016_SolicitacoesAlcada A
+    LEFT JOIN {database}.dbo.tCRS_0006_GrupoEconomicoCadastro B ON A.idGrupo = B.idGrupo
+    LEFT JOIN {database}.dbo.tCRS_0015_StatusAlcada C ON A.idStatus = C.idStatus 
     LEFT JOIN {database}.dbo.tCRS_0001_UsuarioCadastro E ON A.cdUser = E.cdUser
-    LEFT JOIN {database}.dbo.tCRS_0021_SolicitacoesAlcadaResposta F ON A.idSolicitacao = F.idSolicitacao
-    WHERE dsProfile = '{mesa}'
-    AND dsStatus IN ('Aprovado', 'Rejeitado')
+    LEFT JOIN {database}.dbo.tCRS_0018_SolicitacoesAlcadaResposta F ON A.idSolicitacao = F.idSolicitacao
+    WHERE {"A.cdMesa IN ('PRIVATE MARKETS', 'MESA CORE')" if mesa == 'ADMIN' else f"A.cdMesa = '{mesa}'"}
+      AND (C.dsStatus IN ('Aprovado', 'Rejeitado') OR A.idStatus IN (4, 6))
 
 """
 
-query_get_descricao_solicitacao = lambda database, idsolicitacao: f"""
+query_get_solicitacao_cabecalho = lambda database, id_solicitacao: f"""
 
     SELECT 
-        dsGrupo,
-        E.cdRating AS cdRatingGrupo,
+        A.idSolicitacao,
+        A.dtSolicitacao,
+        A.cdUser,
+        A.cdMesa,
+        A.idGrupo,
+        B.dsGrupo,
+        A.cdRatingGrupo,
         A.vlShareDivida AS vlShareDividaGrupo,
-        dsEmissor,
-        F.cdRating AS cdRatingEmissor,
-        B.vlShareDivida AS vlShareDividaEmissor,
-        vlPrazo,
-        vlTerceiros,
-        vlReservaTecnica,
-        icRunOff,
-        icLimiteMeta,
-        dtVencimentoLimiteMeta
-    FROM {database}.dbo.tCRS_0018_SolicitacoesAlcada A
-    LEFT JOIN {database}.dbo.tCRS_0019_SolicitacoesAlcadaDescricao B ON A.idSolicitacao = B.idSolicitacao
-    LEFT JOIN {database}.dbo.tCRS_0005_GrupoEconomicoCadastro C ON A.idGrupo = C.idGrupo 
-    LEFT JOIN {database}.dbo.tCRS_0006_EmissorCadastro D ON B.idEmissor = D.idEmissor
-    LEFT JOIN {database}.dbo.tCRS_0016_RatingsDistintosCadastro E ON A.idRatingGrupo = E.idRating
-    LEFT JOIN {database}.dbo.tCRS_0016_RatingsDistintosCadastro F ON B.idRating = F.idRating
-    WHERE A.idSolicitacao = {idsolicitacao}
+        A.dsTipoEvento
+    FROM {database}.dbo.tCRS_0016_SolicitacoesAlcada A
+    LEFT JOIN {database}.dbo.tCRS_0006_GrupoEconomicoCadastro B ON A.idGrupo = B.idGrupo
+    WHERE A.idSolicitacao = {id_solicitacao}
+
+"""
+
+query_get_descricao_solicitacao = lambda database, id_solicitacao: f"""
+
+    SELECT 
+        A.idSolicitacao,
+        B.cdMesa,
+        A.idEmissor,
+        D.dsEmissor,
+        A.cdRating AS cdRatingEmissor,
+        A.vlPrazo,
+        A.vlTerceiros,
+        A.vlReservaTecnica,
+        A.icRunOff,
+        A.vlShareDivida AS vlShareDividaEmissor,
+        A.icLimiteMeta,
+        CAST(A.dtVencimentoLimiteMeta AS DATE) AS dtVencimentoLimiteMeta
+    FROM {database}.dbo.tCRS_0017_SolicitacoesAlcadaDescricao A
+    LEFT JOIN {database}.dbo.tCRS_0016_SolicitacoesAlcada B ON A.idSolicitacao = B.idSolicitacao
+    LEFT JOIN {database}.dbo.tCRS_0007_EmissorCadastro D ON A.idEmissor = D.idEmissor
+    WHERE A.idSolicitacao = {id_solicitacao}
 
 """

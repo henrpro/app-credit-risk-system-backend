@@ -30,10 +30,6 @@ def obtem_dados_solicitacao():
         database = current_app.config['DATABASE']
         filtros = request.args.to_dict()
         ids_solicitacao_raw = filtros.get('idSolicitacao')
-
-        if not ids_solicitacao_raw:
-            return jsonify({'Erro': 'Parâmetro idSolicitacao é obrigatório.'}), 400
-
         detalhes = obter_detalhes_alcada(database, ids_solicitacao_raw)
         return jsonify(detalhes), 200
     except Exception as e:
@@ -45,10 +41,6 @@ def responder_alcada():
     try:
         database = current_app.config['DATABASE']
         payload = request.json
-
-        if not payload:
-            return jsonify({'Erro': 'Payload JSON não informado.'}), 400
-
         realizar_resposta_alcada(database, payload)
         return jsonify({'message': 'Resposta de alçada registrada com sucesso.'}), 200
     except Exception as e:

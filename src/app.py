@@ -1,5 +1,6 @@
 # Importações do projeto
 from blueprints.consultar_solicitacao.routes import consultar_solicitacao
+from blueprints.alcadas_pendentes.routes import alcadas_pendentes
 from blueprints.gestao_de_usuarios.routes import gestao_de_usuarios
 from blueprints.grupos_economicos.routes import grupos_economicos
 from blueprints.solicitar_alcada.routes import solicitar_alcada
@@ -23,6 +24,7 @@ app.config['DATABASE'] = config['database']
 
 # Registra as blueprints
 app.register_blueprint(consultar_solicitacao, url_prefix='/v1/consultar-solicitacao')
+app.register_blueprint(alcadas_pendentes, url_prefix='/v1/alcadas-pendentes')
 app.register_blueprint(gestao_de_usuarios, url_prefix='/v1/gestao-de-usuarios')
 app.register_blueprint(grupos_economicos, url_prefix='/v1/grupos-economicos')
 app.register_blueprint(solicitar_alcada, url_prefix='/v1/solicitar-alcada')

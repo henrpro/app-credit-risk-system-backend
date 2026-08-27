@@ -241,6 +241,46 @@ class InsumosGruposEconomicos:
             cnx.close()
             engine.dispose()
 
+    @classmethod
+    def execute_delete_emissor_completo(cls, database: str, id_emissor: int):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_delete_emissor_oc3(database, id_emissor)))
+                cnx.execute(text(query_delete_emissor_crims(database, id_emissor)))
+                cnx.execute(text(query_delete_emissor_fidc(database, id_emissor)))
+                cnx.execute(text(query_delete_emissor_solicitacoes_descricao(database, id_emissor)))
+                cnx.execute(text(query_delete_emissor_limites_historico(database, id_emissor)))
+                cnx.execute(text(query_delete_emissor_limites_vigentes(database, id_emissor)))
+                cnx.execute(text(query_delete_emissor_flexibilizacao(database, id_emissor)))
+                cnx.execute(text(query_delete_emissor_ratings_historico(database, id_emissor)))
+                cnx.execute(text(query_delete_emissor_ratings_vigentes(database, id_emissor)))
+                cnx.execute(text(query_delete_emissor_mapeamento_ativos(database, id_emissor)))
+                cnx.execute(text(query_delete_emissor_controle_limites(database, id_emissor)))
+                cnx.execute(text(query_update_reset_holding_dependentes(database, id_emissor)))
+                cnx.execute(text(query_delete_emissor_cadastro(database, id_emissor)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()
+
+    @classmethod
+    def execute_transferir_emissor_grupo(cls, database: str, id_emissor: int, id_grupo_destino: int):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(query_update_reset_holding_dependentes(database, id_emissor)))
+                cnx.execute(text(query_transfer_emissor_grupo(database, id_emissor, id_grupo_destino)))
+                cnx.execute(text(query_transfer_emissor_limites_historico(database, id_emissor, id_grupo_destino)))
+                cnx.execute(text(query_transfer_emissor_limites_vigentes(database, id_emissor, id_grupo_destino)))
+                cnx.execute(text(query_transfer_emissor_controle_limites(database, id_emissor, id_grupo_destino)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()
+
     # _______________________________ Deletar Grupo _______________________________
 
     @classmethod
@@ -262,6 +302,20 @@ class InsumosGruposEconomicos:
             with cnx.begin():
                 cnx.execute(text(query_delete_emissores_oc3_by_grupo(database, id_grupo)))
                 cnx.execute(text(query_delete_emissores_crims_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_emissores_fidc_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_solicitacoes_descricao_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_solicitacoes_resposta_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_limites_historico_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_limites_vigentes_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_flexibilizacao_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_ratings_grupo_historico(database, id_grupo)))
+                cnx.execute(text(query_delete_ratings_emissor_historico_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_ratings_grupo_vigentes(database, id_grupo)))
+                cnx.execute(text(query_delete_ratings_emissor_vigentes_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_mapeamento_ativos_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_controle_limites_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_delete_solicitacoes_by_grupo(database, id_grupo)))
+                cnx.execute(text(query_update_reset_holding_by_grupo(database, id_grupo)))
                 cnx.execute(text(query_delete_emissores_by_grupo(database, id_grupo)))
                 cnx.execute(text(query_delete_grupo(database, id_grupo)))
         except Exception as e:

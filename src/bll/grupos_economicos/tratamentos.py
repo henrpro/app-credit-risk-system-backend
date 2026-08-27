@@ -50,7 +50,7 @@ def cadastrar_novo_grupo_economico(database: str, payload: dict):
 
     try:
         # Extrai os dados do payload
-        ds_grupo = payload.get('dsGrupo', '').strip()
+        ds_grupo = str(payload.get('dsGrupo') or '').strip()
         emissores = payload.get('emissores', [])
         
         # 1. Verifica se o grupo já existe
@@ -59,7 +59,7 @@ def cadastrar_novo_grupo_economico(database: str, payload: dict):
             
         # 2. Verifica se os emissores já existem
         for emissor in emissores:
-            nome = emissor.get('dsEmissor', '').strip()
+            nome = str(emissor.get('dsEmissor') or '').strip()
             if InsumosGruposEconomicos.get_emissor_by_name(database, nome):
                 raise ValueError(f"Já existe um emissor cadastrado com o nome '{nome}'.")
 
@@ -99,7 +99,7 @@ def cadastrar_novo_grupo_economico(database: str, payload: dict):
                 
         # Segunda passagem para atualizar a holding após todos os emissores existirem
         for emissor in emissores:
-            id_emissor = InsumosGruposEconomicos.get_emissor_by_name(database, emissor.get('dsEmissor', '').strip())
+            id_emissor = InsumosGruposEconomicos.get_emissor_by_name(database, str(emissor.get('dsEmissor') or '').strip())
             emissor_holding = emissor.get('dsEmissorHoldingConsumo')
             id_emissor_holding = InsumosGruposEconomicos.get_emissor_by_name(database, emissor_holding) if emissor_holding else None
             InsumosGruposEconomicos.execute_update_holding_consumo(database, id_emissor, id_emissor_holding)
@@ -117,7 +117,7 @@ def update_grupo_economico(database: str, payload: dict):
     try:
         # Começamos extraindo os dados do payload
         id_grupo = int(payload.get('idGrupo'))
-        ds_grupo = payload.get('dsGrupo', '').strip()
+        ds_grupo = str(payload.get('dsGrupo') or '').strip()
         emissores = payload.get('emissores', [])
 
         # Validamos se já existe algum grupo com este nome em outro id
@@ -129,22 +129,37 @@ def update_grupo_economico(database: str, payload: dict):
         InsumosGruposEconomicos.execute_delete_grupo_economico(database, id_grupo)
         InsumosGruposEconomicos.execute_insert_grupo_economico(database, id_grupo, ds_grupo)
 
-        # Identificamos e deletamos os emissores removidos
+        # Identificamos e deletamos os emissores removidos em cascata
         ids_emissores_atuais = InsumosGruposEconomicos.get_ids_emissores_by_grupo(database, id_grupo)
         ids_emissores_payload = [int(emissor.get('idEmissor')) for emissor in emissores if emissor.get('idEmissor')]
         ids_para_deletar = set(ids_emissores_atuais) - set(ids_emissores_payload)
 
         for id_emissor_del in ids_para_deletar:
-            InsumosGruposEconomicos.execute_delete_emissor_oc3(database, id_emissor_del)
-            InsumosGruposEconomicos.execute_delete_emissor_crims(database, id_emissor_del)
-            InsumosGruposEconomicos.execute_delete_emissor_cadastro(database, id_emissor_del)
+            InsumosGruposEconomicos.execute_delete_emissor_completo(database, id_emissor_del)
 
         # Buscamos o maior id emissor para o caso de novos emissores
         max_id_emissor = InsumosGruposEconomicos.get_max_id_emissor(database)
 
-        # Iteramos pelos emissores do grupo
+        # Separamos emissores que serão transferidos para outro grupo dos que permanecem
+        emissores_do_grupo = []
+
         for emissor in emissores:
-            nome = emissor.get('dsEmissor', '').strip()
+            id_emissor = emissor.get('idEmissor')
+            ds_grupo_destino = str(emissor.get('dsGrupoDestino') or '').strip()
+            id_grupo_destino = emissor.get('idGrupoDestino')
+
+            # Se houver grupo de destino diferente do atual, transfere o emissor
+            if ds_grupo_destino and ds_grupo_destino != ds_grupo:
+                id_destino = int(id_grupo_destino) if id_grupo_destino else InsumosGruposEconomicos.get_id_grupo_by_name(database, ds_grupo_destino)
+                if id_destino and id_destino != id_grupo and id_emissor:
+                    InsumosGruposEconomicos.execute_transferir_emissor_grupo(database, int(id_emissor), id_destino)
+                    continue
+
+            emissores_do_grupo.append(emissor)
+
+        # Iteramos pelos emissores que permanecem no grupo
+        for emissor in emissores_do_grupo:
+            nome = str(emissor.get('dsEmissor') or '').strip()
             id_emissor = emissor.get('idEmissor')
 
             # Se não existir id_emissor no payload, geramos um novo
@@ -188,7 +203,7 @@ def update_grupo_economico(database: str, payload: dict):
                 InsumosGruposEconomicos.execute_insert_emissor_crims(database, id_emissor, crims)
 
         # Segunda passagem para atualizar a holding após todos os emissores existirem
-        for emissor in emissores:
+        for emissor in emissores_do_grupo:
             id_emissor = int(emissor.get('idEmissor'))
             id_emissor_holding = emissor.get('idEmissorHoldingConsumo')
             if id_emissor_holding:

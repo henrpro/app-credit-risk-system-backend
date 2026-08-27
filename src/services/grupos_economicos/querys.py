@@ -172,7 +172,6 @@ query_delete_emissor_oc3 = lambda database, id_emissor: f"""
 
 """
 
-
 query_delete_emissor_crims = lambda database, id_emissor: f"""
 
     DELETE 
@@ -181,11 +180,125 @@ query_delete_emissor_crims = lambda database, id_emissor: f"""
 
 """
 
+query_delete_emissor_fidc = lambda database, id_emissor: f"""
+
+    DELETE 
+    FROM {database}.dbo.tCRS_0012_CadastroFIDC
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_delete_emissor_solicitacoes_descricao = lambda database, id_emissor: f"""
+
+    DELETE 
+    FROM {database}.dbo.tCRS_0017_SolicitacoesAlcadaDescricao
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_delete_emissor_limites_historico = lambda database, id_emissor: f"""
+
+    DELETE 
+    FROM {database}.dbo.tCRS_0019_LimitesAprovadosHistorico
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_delete_emissor_limites_vigentes = lambda database, id_emissor: f"""
+
+    DELETE 
+    FROM {database}.dbo.tCRS_0020_LimitesVigentes
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_delete_emissor_flexibilizacao = lambda database, id_emissor: f"""
+
+    DELETE 
+    FROM {database}.dbo.tCRS_0021_FlexibilizacaoConsumo
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_delete_emissor_ratings_historico = lambda database, id_emissor: f"""
+
+    DELETE 
+    FROM {database}.dbo.tCRS_0023_RatingsAprovadosEmissorHistorico
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_delete_emissor_ratings_vigentes = lambda database, id_emissor: f"""
+
+    DELETE 
+    FROM {database}.dbo.tCRS_0025_RatingsVigentesEmissor
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_delete_emissor_mapeamento_ativos = lambda database, id_emissor: f"""
+
+    DELETE 
+    FROM {database}.dbo.tCRS_0028_MapeamentoAtivosConsumo
+    WHERE idEmissor = {id_emissor} OR idEmissorConsumo = {id_emissor}
+
+"""
+
+query_delete_emissor_controle_limites = lambda database, id_emissor: f"""
+
+    DELETE 
+    FROM {database}.dbo.tCRS_0031_ExecucaoControleLimites
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_update_reset_holding_dependentes = lambda database, id_emissor: f"""
+
+    UPDATE {database}.dbo.tCRS_0007_EmissorCadastro
+    SET idEmissorHoldingConsumo = NULL,
+        icConsomeHolding = 0
+    WHERE idEmissorHoldingConsumo = {id_emissor}
+
+"""
 
 query_delete_emissor_cadastro = lambda database, id_emissor: f"""
 
     DELETE 
     FROM {database}.dbo.tCRS_0007_EmissorCadastro
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_transfer_emissor_grupo = lambda database, id_emissor, id_grupo_destino: f"""
+
+    UPDATE {database}.dbo.tCRS_0007_EmissorCadastro
+    SET idGrupo = {id_grupo_destino},
+        idEmissorHoldingConsumo = NULL,
+        icConsomeHolding = 0
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_transfer_emissor_limites_historico = lambda database, id_emissor, id_grupo_destino: f"""
+
+    UPDATE {database}.dbo.tCRS_0019_LimitesAprovadosHistorico
+    SET idGrupo = {id_grupo_destino}
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_transfer_emissor_limites_vigentes = lambda database, id_emissor, id_grupo_destino: f"""
+
+    UPDATE {database}.dbo.tCRS_0020_LimitesVigentes
+    SET idGrupo = {id_grupo_destino}
+    WHERE idEmissor = {id_emissor}
+
+"""
+
+query_transfer_emissor_controle_limites = lambda database, id_emissor, id_grupo_destino: f"""
+
+    UPDATE {database}.dbo.tCRS_0031_ExecucaoControleLimites
+    SET idGrupo = {id_grupo_destino}
     WHERE idEmissor = {id_emissor}
 
 """
@@ -200,7 +313,6 @@ query_delete_emissores_oc3_by_grupo = lambda database, id_grupo: f"""
 
 """
 
-
 query_delete_emissores_crims_by_grupo = lambda database, id_grupo: f"""
     
     DELETE 
@@ -209,6 +321,123 @@ query_delete_emissores_crims_by_grupo = lambda database, id_grupo: f"""
 
 """
 
+query_delete_emissores_fidc_by_grupo = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0012_CadastroFIDC
+    WHERE idEmissor IN (SELECT idEmissor FROM {database}.dbo.tCRS_0007_EmissorCadastro WHERE idGrupo = {id_grupo})
+
+"""
+
+query_delete_solicitacoes_descricao_by_grupo = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0017_SolicitacoesAlcadaDescricao
+    WHERE idEmissor IN (SELECT idEmissor FROM {database}.dbo.tCRS_0007_EmissorCadastro WHERE idGrupo = {id_grupo})
+       OR idSolicitacao IN (SELECT idSolicitacao FROM {database}.dbo.tCRS_0016_SolicitacoesAlcada WHERE idGrupo = {id_grupo})
+
+"""
+
+query_delete_solicitacoes_resposta_by_grupo = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0018_SolicitacoesAlcadaResposta
+    WHERE idSolicitacao IN (SELECT idSolicitacao FROM {database}.dbo.tCRS_0016_SolicitacoesAlcada WHERE idGrupo = {id_grupo})
+
+"""
+
+query_delete_limites_historico_by_grupo = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0019_LimitesAprovadosHistorico
+    WHERE idGrupo = {id_grupo}
+       OR idEmissor IN (SELECT idEmissor FROM {database}.dbo.tCRS_0007_EmissorCadastro WHERE idGrupo = {id_grupo})
+
+"""
+
+query_delete_limites_vigentes_by_grupo = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0020_LimitesVigentes
+    WHERE idGrupo = {id_grupo}
+       OR idEmissor IN (SELECT idEmissor FROM {database}.dbo.tCRS_0007_EmissorCadastro WHERE idGrupo = {id_grupo})
+
+"""
+
+query_delete_flexibilizacao_by_grupo = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0021_FlexibilizacaoConsumo
+    WHERE idEmissor IN (SELECT idEmissor FROM {database}.dbo.tCRS_0007_EmissorCadastro WHERE idGrupo = {id_grupo})
+
+"""
+
+query_delete_ratings_grupo_historico = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0022_RatingsAprovadosGrupoHistorico
+    WHERE idGrupo = {id_grupo}
+
+"""
+
+query_delete_ratings_emissor_historico_by_grupo = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0023_RatingsAprovadosEmissorHistorico
+    WHERE idEmissor IN (SELECT idEmissor FROM {database}.dbo.tCRS_0007_EmissorCadastro WHERE idGrupo = {id_grupo})
+
+"""
+
+query_delete_ratings_grupo_vigentes = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0024_RatingsVigentesGrupo
+    WHERE idGrupo = {id_grupo}
+
+"""
+
+query_delete_ratings_emissor_vigentes_by_grupo = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0025_RatingsVigentesEmissor
+    WHERE idEmissor IN (SELECT idEmissor FROM {database}.dbo.tCRS_0007_EmissorCadastro WHERE idGrupo = {id_grupo})
+
+"""
+
+query_delete_mapeamento_ativos_by_grupo = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0028_MapeamentoAtivosConsumo
+    WHERE idEmissor IN (SELECT idEmissor FROM {database}.dbo.tCRS_0007_EmissorCadastro WHERE idGrupo = {id_grupo})
+       OR idEmissorConsumo IN (SELECT idEmissor FROM {database}.dbo.tCRS_0007_EmissorCadastro WHERE idGrupo = {id_grupo})
+
+"""
+
+query_delete_controle_limites_by_grupo = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0031_ExecucaoControleLimites
+    WHERE idGrupo = {id_grupo}
+       OR idEmissor IN (SELECT idEmissor FROM {database}.dbo.tCRS_0007_EmissorCadastro WHERE idGrupo = {id_grupo})
+
+"""
+
+query_delete_solicitacoes_by_grupo = lambda database, id_grupo: f"""
+    
+    DELETE 
+    FROM {database}.dbo.tCRS_0016_SolicitacoesAlcada
+    WHERE idGrupo = {id_grupo}
+
+"""
+
+query_update_reset_holding_by_grupo = lambda database, id_grupo: f"""
+
+    UPDATE {database}.dbo.tCRS_0007_EmissorCadastro
+    SET idEmissorHoldingConsumo = NULL,
+        icConsomeHolding = 0
+    WHERE idEmissorHoldingConsumo IN (SELECT idEmissor FROM {database}.dbo.tCRS_0007_EmissorCadastro WHERE idGrupo = {id_grupo})
+
+"""
 
 query_delete_emissores_by_grupo = lambda database, id_grupo: f"""
     
@@ -217,7 +446,6 @@ query_delete_emissores_by_grupo = lambda database, id_grupo: f"""
     WHERE idGrupo = {id_grupo}
 
 """
-
 
 query_delete_grupo = lambda database, id_grupo: f"""
 

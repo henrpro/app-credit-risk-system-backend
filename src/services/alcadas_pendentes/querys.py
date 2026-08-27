@@ -29,13 +29,11 @@ query_get_detalhes_solicitacao = lambda database, idsolicitacao: f"""
         vlPrazo,
         vlTerceiros,
         vlReservaTecnica
-    FROM {database}.dbo.tCRS_0019_SolicitacoesAlcadaDescricao A
-    LEFT JOIN {database}.dbo.tCRS_0018_SolicitacoesAlcada B ON A.idSolicitacao = B.idSolicitacao
-    LEFT JOIN {database}.dbo.tCRS_0005_GrupoEconomicoCadastro C ON B.idGrupo = C.idGrupo
-    LEFT JOIN {database}.dbo.tCRS_0006_EmissorCadastro D ON A.idEmissor = D.idEmissor
-    LEFT JOIN {database}.dbo.tCRS_0016_RatingsDistintosCadastro E ON A.idRating = E.idRating
-    LEFT JOIN {database}.dbo.tCRS_0016_RatingsDistintosCadastro F ON B.idRatingGrupo = F.idRating
-    LEFT JOIN {database}.dbo.tCRS_0015_TipoEventoCadastro G ON B.idTipoEvento = G.idTipoEvento
+    FROM {database}.dbo.tCRS_0017_SolicitacoesAlcadaDescricao A
+    LEFT JOIN {database}.dbo.tCRS_0016_SolicitacoesAlcada B ON A.idSolicitacao = B.idSolicitacao
+    LEFT JOIN {database}.dbo.tCRS_0006_GrupoEconomicoCadastro C ON B.idGrupo = C.idGrupo
+    LEFT JOIN {database}.dbo.tCRS_0007_EmissorCadastro D ON A.idEmissor = D.idEmissor
+    LEFT JOIN {database}.dbo.tCRS_0013_TipoEvento G ON B.idTipoEvento = G.idTipoEvento
     WHERE A.idSolicitacao = {idsolicitacao}
 
 """

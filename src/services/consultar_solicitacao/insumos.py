@@ -34,3 +34,15 @@ class InsumosConsultarSolicitacao:
         finally:
             cnx.close()
             engine.dispose()
+
+    @classmethod
+    def execute_update_status_cancelar_solicitacao(cls, database: str, id_solicitacao: int):
+        engine, cnx = Connections.get_cnx_insert(database)
+        try:
+            with cnx.begin():
+                cnx.execute(text(update_status_cancelar_solicitacao(database, id_solicitacao)))
+        except Exception as e:
+            raise e
+        finally:
+            cnx.close()
+            engine.dispose()

@@ -1,5 +1,5 @@
 # Importações do projeto
-from models.models_grupos_economicos import GetSetoresModel, GetSubsetoresModel, GetGruposEconomicosDistintosModel, GetEmissoresOC3Model, GetEmissoresCRIMSModel, GetGruposEconomicosModel
+from models.models_grupos_economicos import GetSetoresModel, GetGruposEconomicosDistintosModel, GetEmissoresOC3Model, GetEmissoresCRIMSModel, GetGruposEconomicosModel
 from bll.grupos_economicos.tratamentos import obtem_grupo_economico, cadastrar_novo_grupo_economico, update_grupo_economico
 from services.grupos_economicos.insumos import InsumosGruposEconomicos
 from utils.api_functions import apply_model_dataclass
@@ -33,17 +33,6 @@ def obtem_setores_cadastrados():
         return jsonify([ob.__dict__ for ob in dados])
     except Exception as e:
         return jsonify({'Erro ao obter setores cadastrados': str(e)}), 500
-
-
-@grupos_economicos.route('/obtem-subsetores-cadastrados', methods=['GET'])
-def obtem_subsetores_cadastrados():
-    try:
-        database = current_app.config['DATABASE']
-        df = InsumosGruposEconomicos.get_subsetores_distintos(database)
-        dados = apply_model_dataclass(df, GetSubsetoresModel)
-        return jsonify([ob.__dict__ for ob in dados])
-    except Exception as e:
-        return jsonify({'Erro ao obter subsetores cadastrados': str(e)}), 500
 
 # _______________________________ Cadastrar Grupo _______________________________
 

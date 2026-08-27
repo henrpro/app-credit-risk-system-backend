@@ -29,14 +29,6 @@ class InsumosGruposEconomicos:
         except Exception as e:
             raise e
 
-    @classmethod
-    def get_subsetores_distintos(cls, database: str):
-        try:
-            with Connections.get_cnx_select(database) as cnx:
-                df = pd.read_sql(query_get_subsetores_distintos(database), cnx)
-                return df
-        except Exception as e:
-            raise e
 
     @classmethod
     def get_id_setor_by_name(cls, database: str, ds_setor: str):
@@ -47,14 +39,6 @@ class InsumosGruposEconomicos:
         except Exception as e:
             raise e
 
-    @classmethod
-    def get_id_subsetor_by_name(cls, database: str, ds_subsetor: str):
-        try:
-            with Connections.get_cnx_select(database) as cnx:
-                df = pd.read_sql(query_get_id_subsetor_by_name(database, ds_subsetor), cnx)
-                return int(df['idSubsetor'].iloc[0]) if not df.empty else None
-        except Exception as e:
-            raise e
 
     @classmethod
     def get_id_grupo_by_name(cls, database: str, ds_grupo: str, exclude_id: int = None):
@@ -125,11 +109,11 @@ class InsumosGruposEconomicos:
             engine.dispose()
 
     @classmethod
-    def execute_insert_emissor(cls, database: str, id_emissor: int, cd_cnpj: str, ds_emissor: str, ic_holding: int, ic_consome_holding: int, id_holding, id_grupo: int, id_setor: int, id_subsetor: int):
+    def execute_insert_emissor(cls, database: str, id_emissor: int, cd_cnpj: str, ds_emissor: str, ic_holding: int, ic_consome_holding: int, id_holding, id_grupo: int, id_setor: int):
         engine, cnx = Connections.get_cnx_insert(database)
         try:
             with cnx.begin():
-                cnx.execute(text(query_insert_emissor(database, id_emissor, cd_cnpj, ds_emissor, ic_holding, ic_consome_holding, id_holding, id_grupo, id_setor, id_subsetor)))
+                cnx.execute(text(query_insert_emissor(database, id_emissor, cd_cnpj, ds_emissor, ic_holding, ic_consome_holding, id_holding, id_grupo, id_setor)))
         except Exception as e:
             raise e
         finally:

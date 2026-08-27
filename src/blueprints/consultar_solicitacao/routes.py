@@ -17,7 +17,7 @@ def obtem_solicitacoes_pendentes():
     try:
         database = current_app.config['DATABASE']
         filtros = request.args.to_dict()
-        mesa = filtros.get('mesa') or filtros.get('dsProfile')
+        mesa = filtros.get('dsProfile')
         df = InsumosConsultarSolicitacao.get_solicitacoes_pendentes(database, mesa)
         dados = apply_model_dataclass(df, GetSolicitacoesPendentesModel)
         return jsonify([ob.__dict__ for ob in dados])
@@ -32,6 +32,18 @@ def atualizar_status_aprovacao_pendente():
         payload = request.json
         id_solicitacao = payload.get('idSolicitacao')
         InsumosConsultarSolicitacao.execute_update_status_aprovacao_pendente(database, id_solicitacao)
+        return jsonify({'message': 'Status da solicitação atualizado com sucesso.'}), 200
+    except Exception as e:
+        return jsonify({'Erro ao atualizar status da solicitacao': str(e)}), 500
+
+
+@consultar_solicitacao.route('/atualizar-status-cancelar-solicitacao', methods=['POST'])
+def atualizar_status_cancelar_solicitacao():
+    try:
+        database = current_app.config['DATABASE']
+        payload = request.json
+        id_solicitacao = payload.get('idSolicitacao')
+        InsumosConsultarSolicitacao.execute_update_status_cancelar_solicitacao(database, id_solicitacao)
         return jsonify({'message': 'Status da solicitação atualizado com sucesso.'}), 200
     except Exception as e:
         return jsonify({'Erro ao atualizar status da solicitacao': str(e)}), 500

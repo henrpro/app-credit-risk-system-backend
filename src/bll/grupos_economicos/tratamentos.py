@@ -36,8 +36,7 @@ def obtem_grupo_economico(database: str, grupo: str):
             'icHolding': row.get('icHolding', 0),
             'icConsomeHolding': row.get('icConsomeHolding', 0),
             'idEmissorHoldingConsumo': row.get('idEmissorHoldingConsumo', 0),
-            'dsSetor': row.get('dsSetor', ''),
-            'dsSubsetor': row.get('dsSubsetor', '')
+            'dsSetor': row.get('dsSetor', '')
         })
         
     return pd.DataFrame(lista_emissores)
@@ -76,9 +75,8 @@ def cadastrar_novo_grupo_economico(database: str, payload: dict):
         for emissor in emissores:
             max_id_emissor += 1
 
-            # Buscamos o idSetor e o idSubsetor para os valores recebidos
+            # Buscamos o idSetor para os valores recebidos
             id_setor = InsumosGruposEconomicos.get_id_setor_by_name(database, emissor.get('dsSetor')) if emissor.get('dsSetor') else None
-            id_subsetor = InsumosGruposEconomicos.get_id_subsetor_by_name(database, emissor.get('dsSubsetor')) if emissor.get('dsSubsetor') else None
             
             # Inserimos o emissor na tabela de cadastro de emissores
             InsumosGruposEconomicos.execute_insert_emissor(
@@ -90,8 +88,7 @@ def cadastrar_novo_grupo_economico(database: str, payload: dict):
                 emissor.get('icConsomeHolding', 0), 
                 None, 
                 id_grupo, 
-                id_setor, 
-                id_subsetor
+                id_setor
             )
             
             # Inserimos os emissores OC3 e CRIMS associados ao emissor
@@ -163,9 +160,8 @@ def update_grupo_economico(database: str, payload: dict):
             if id_existente_nome:
                 raise ValueError(f"Já existe um emissor cadastrado com o nome '{nome}'.")
 
-            # Buscamos o idSetor e o idSubsetor para os valores recebidos
+            # Buscamos o idSetor para os valores recebidos
             id_setor = InsumosGruposEconomicos.get_id_setor_by_name(database, emissor.get('dsSetor')) if emissor.get('dsSetor') else None
-            id_subsetor = InsumosGruposEconomicos.get_id_subsetor_by_name(database, emissor.get('dsSubsetor')) if emissor.get('dsSubsetor') else None
             
             # Deletamos o emissor oc3, crims e cadastro antes de reinserir
             InsumosGruposEconomicos.execute_delete_emissor_oc3(database, id_emissor)
@@ -182,8 +178,7 @@ def update_grupo_economico(database: str, payload: dict):
                 emissor.get('icConsomeHolding', 0), 
                 None, 
                 id_grupo, 
-                id_setor, 
-                id_subsetor
+                id_setor
             )
 
             # Reinserimos o emissor oc3 e crims

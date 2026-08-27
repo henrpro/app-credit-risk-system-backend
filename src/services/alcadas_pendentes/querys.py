@@ -7,10 +7,10 @@ query_get_alcadas_pendentes = lambda database: f"""
         dsGrupo,
         dsProfile,
         dsTipoEvento
-    FROM {database}.dbo.tCRS_0018_SolicitacoesAlcada A
-    LEFT JOIN {database}.dbo.tCRS_0005_GrupoEconomicoCadastro B ON A.idGrupo = B.idGrupo
-    LEFT JOIN {database}.dbo.tCRS_0017_StatusCadastro C ON A.idStatus = C.idStatus
-    LEFT JOIN {database}.dbo.tCRS_0015_TipoEventoCadastro D ON A.idTipoEvento = D.idTipoEvento
+    FROM {database}.dbo.tCRS_0016_SolicitacoesAlcada A
+    LEFT JOIN {database}.dbo.tCRS_0006_GrupoEconomicoCadastro B ON A.idGrupo = B.idGrupo
+    LEFT JOIN {database}.dbo.tCRS_0015_StatusAlcada C ON A.idStatus = C.idStatus
+    LEFT JOIN {database}.dbo.tCRS_0013_TipoEvento D ON A.idTipoEvento = D.idTipoEvento
     WHERE dsStatus = 'Alçada Pendente'
 
 """

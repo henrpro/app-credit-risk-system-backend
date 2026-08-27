@@ -6,10 +6,6 @@ class GetSetoresModel:
     dsSetor: str
 
 @dataclass
-class GetSubsetoresModel:
-    dsSubsetor: str
-
-@dataclass
 class GetGruposEconomicosDistintosModel:
     dsGrupo: str
 
@@ -39,4 +35,3 @@ class GetGruposEconomicosModel:
     icConsomeHolding: int
     idEmissorHoldingConsumo: int
     dsSetor: str
-    dsSubsetor: str

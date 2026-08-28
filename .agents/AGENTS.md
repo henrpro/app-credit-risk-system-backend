@@ -10,7 +10,7 @@ Este documento define os princípios inegociáveis de engenharia de software, pa
 - **Lógica Linear e Direta (Sem Funções Aninhadas)**: Proibido criar funções dentro de funções (`nested functions`/`closures` desnecessárias). O fluxo de execução deve ser linear, plano, claro e direto ao ponto.
 - **Identidade e Consistência Estética**: Cada arquivo gerado deve ser indistinguível do código escrito pelo autor original.
 - **Rigor na Arquitetura em 5 Camadas**: A separação de responsabilidades deve ser seguida estritamente (`models` -> `services/querys` -> `services/insumos` -> `bll` -> `blueprints`).
-- **Visibilidade Integral do Banco de Dados**: O banco SQL Server (`CRS` em produção e `CRS_HOMDB` em desenvolvimento) possui modelagem estrita com 31 tabelas catalogadas (`tCRS_0001` a `tCRS_0031`).
+- **Visibilidade Integral do Banco de Dados**: O banco SQL Server (`CRS` em produção e `CRS_HOMDB` em desenvolvimento) possui modelagem estrita com 32 tabelas catalogadas (`tCRS_0001` a `tCRS_0032`).
 
 ---
 

@@ -20,9 +20,9 @@ Este documento mapeia os relacionamentos conceituais, chaves estrangeiras lógic
         │         ▼                                               ▼
         │   [tCRS_0016_SolicitacoesAlcada] ◄── [tCRS_0001_UsuarioCadastro]
         │         │                                (cdUser)
-        │         ├───────────────────────────────┐
-        │         ▼                               ▼
-        │   [tCRS_0017_SolicitacoesAlcadaDescricao] [tCRS_0018_SolicitacoesAlcadaResposta]
+        │         ├───────────────────────────────┬───────────────────────────────┐
+        │         ▼                               ▼                               ▼
+        │   [tCRS_0017_SolicitacoesAlcadaDescricao] [tCRS_0018_SolicitacoesAlcadaResposta] [tCRS_0032_LimitesAprovacao]
         │         │
         │         ▼
         │   [tCRS_0020_LimitesVigentes]
@@ -95,4 +95,18 @@ SELECT
 FROM {database}.dbo.tCRS_0020_LimitesVigentes L
 INNER JOIN {database}.dbo.tCRS_0006_GrupoEconomicoCadastro G ON L.idGrupo = G.idGrupo
 INNER JOIN {database}.dbo.tCRS_0007_EmissorCadastro E ON L.idEmissor = E.idEmissor
+```
+
+### D. Registro de Aprovações Individuais por Alçada
+```sql
+SELECT 
+    A.idSolicitacao,
+    A.cdUserAprovador,
+    U.dsNome AS dsNomeAprovador,
+    A.dsAlcada,
+    A.dtAprovacao,
+    A.vlPeso
+FROM {database}.dbo.tCRS_0032_LimitesAprovacao A
+INNER JOIN {database}.dbo.tCRS_0001_UsuarioCadastro U ON A.cdUserAprovador = U.cdUser
+WHERE A.idSolicitacao = {id_solicitacao}
 ```

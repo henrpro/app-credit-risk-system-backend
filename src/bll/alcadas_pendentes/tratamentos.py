@@ -63,6 +63,7 @@ def obter_alcadas_pendentes_consolidadas(database: str) -> pd.DataFrame:
 def estruturar_dados_emissores_solicitacao(df_descricao: pd.DataFrame) -> List[Dict[str, Any]]:
     """
     Monta a lista de dados e limites por emissor para a solicitação (consolidado e por mesa).
+    Soma o share da dívida entre as diferentes mesas e verifica convergência/divergência de ratings.
     """
     if df_descricao.empty:
         return []
@@ -72,8 +73,29 @@ def estruturar_dados_emissores_solicitacao(df_descricao: pd.DataFrame) -> List[D
 
     for emissor in emissores_unicos:
         df_emissor = df_descricao[df_descricao['dsEmissor'] == emissor]
-        cd_rating = df_emissor['cdRatingEmissor'].dropna().iloc[0] if not df_emissor['cdRatingEmissor'].dropna().empty else None
-        vl_share = float(df_emissor['vlShareDividaEmissor'].dropna().iloc[0]) if not df_emissor['vlShareDividaEmissor'].dropna().empty else None
+        
+        # Share da dívida somado entre as mesas distintas
+        share_por_mesa = df_emissor.groupby('cdMesa')['vlShareDividaEmissor'].first().dropna()
+        vl_share = float(share_por_mesa.sum()) if not share_por_mesa.empty else None
+
+        # Ratings preenchidos por cada mesa
+        ratings_mesa_list = []
+        ratings_preenchidos_set = set()
+
+        for mesa, sub_df in df_emissor.groupby('cdMesa'):
+            mesa_str = str(mesa).strip()
+            r_series = sub_df['cdRatingEmissor'].dropna()
+            r_val = str(r_series.iloc[0]).strip() if not r_series.empty and str(r_series.iloc[0]).strip() and str(r_series.iloc[0]).strip().lower() != 'none' else None
+            if r_val:
+                ratings_preenchidos_set.add(r_val)
+            ratings_mesa_list.append({
+                'cdMesa': mesa_str,
+                'cdRating': r_val
+            })
+
+        # Divergência se mais de um rating distinto foi preenchido
+        ic_divergencia_rating = len(ratings_preenchidos_set) > 1
+        cd_rating = ', '.join(sorted(ratings_preenchidos_set)) if ratings_preenchidos_set else None
 
         limites_cons_sem_meta = CalculadoraLimitesGrupo.consolidar_emissor_todas_mesas(df_emissor, considerar_meta=False)
         limites_mesa_sem_meta = CalculadoraLimitesGrupo.consolidar_emissor_por_mesa(df_emissor, considerar_meta=False)
@@ -83,6 +105,8 @@ def estruturar_dados_emissores_solicitacao(df_descricao: pd.DataFrame) -> List[D
         emissores_lista.append({
             'dsEmissor': emissor,
             'cdRatingEmissor': cd_rating,
+            'icDivergenciaRating': ic_divergencia_rating,
+            'ratingsPorMesa': ratings_mesa_list,
             'vlShareDividaEmissor': vl_share,
             'limitesConsolidadoSemMeta': limites_cons_sem_meta,
             'limitesPorMesaSemMeta': limites_mesa_sem_meta,
@@ -125,9 +149,9 @@ def estruturar_dados_emissores_vigentes(df_vigentes: pd.DataFrame) -> List[Dict[
 def obter_detalhes_alcada(database: str, ids_solicitacao_raw: Any) -> Dict[str, Any]:
     """
     Busca os detalhes completos da solicitação de alçada:
-    - Dados do grupo (nome, rating, share da dívida, tipo de evento, mesas)
+    - Dados do grupo (nome, rating por mesa com detecção de divergência, share da dívida somado, tipo de evento, mesas)
     - Limites consolidados do grupo (todas as mesas e por mesa, com e sem limite meta)
-    - Limites dos emissores (consolidado e por mesa, com e sem limite meta)
+    - Limites dos emissores (consolidado e por mesa, com e sem limite meta, share somado e ratings por mesa)
     - Limites e ratings vigentes correspondentes.
     """
     try:
@@ -142,10 +166,30 @@ def obter_detalhes_alcada(database: str, ids_solicitacao_raw: Any) -> Dict[str, 
             raise ValueError(f'Nenhuma solicitação encontrada para o(s) ID(s): {ids_solicitacao}')
 
         ds_grupo = df_cabecalho['dsGrupo'].dropna().iloc[0]
-        cd_rating_grupo = df_cabecalho['cdRatingGrupo'].dropna().iloc[0] if not df_cabecalho['cdRatingGrupo'].dropna().empty else None
-        vl_share_divida_grupo = float(df_cabecalho['vlShareDividaGrupo'].dropna().iloc[0]) if not df_cabecalho['vlShareDividaGrupo'].dropna().empty else None
         ds_tipo_evento = df_cabecalho['dsTipoEvento'].dropna().iloc[0] if not df_cabecalho['dsTipoEvento'].dropna().empty else ''
         cd_mesa = ', '.join(sorted(set(str(m) for m in df_cabecalho['cdMesa'].dropna() if str(m).strip())))
+
+        # Share da dívida do grupo somado entre as mesas/solicitações
+        shares_grupo = df_cabecalho['vlShareDividaGrupo'].dropna()
+        vl_share_divida_grupo = float(shares_grupo.sum()) if not shares_grupo.empty else None
+
+        # Ratings do grupo por mesa e detecção de divergência
+        ratings_grupo_mesa_list = []
+        ratings_grupo_set = set()
+
+        for mesa, sub_df in df_cabecalho.groupby('cdMesa'):
+            mesa_str = str(mesa).strip()
+            r_series = sub_df['cdRatingGrupo'].dropna()
+            rg = str(r_series.iloc[0]).strip() if not r_series.empty and str(r_series.iloc[0]).strip() and str(r_series.iloc[0]).strip().lower() != 'none' else None
+            if rg:
+                ratings_grupo_set.add(rg)
+            ratings_grupo_mesa_list.append({
+                'cdMesa': mesa_str,
+                'cdRating': rg
+            })
+
+        ic_divergencia_rating_grupo = len(ratings_grupo_set) > 1
+        cd_rating_grupo = ', '.join(sorted(ratings_grupo_set)) if ratings_grupo_set else None
 
         # 2. Limites solicitados (Grupo e Emissores)
         df_descricao = InsumosAlcadasPendentes.get_detalhes_solicitacao_descricao(database, ids_solicitacao)
@@ -192,6 +236,8 @@ def obter_detalhes_alcada(database: str, ids_solicitacao_raw: Any) -> Dict[str, 
         return {
             'dsGrupo': ds_grupo,
             'cdRatingGrupo': cd_rating_grupo,
+            'icDivergenciaRatingGrupo': ic_divergencia_rating_grupo,
+            'ratingsGrupoPorMesa': ratings_grupo_mesa_list,
             'vlShareDividaGrupo': vl_share_divida_grupo,
             'dsTipoEvento': ds_tipo_evento,
             'cdMesa': cd_mesa,

@@ -312,3 +312,14 @@ Este documento lista todas as 31 tabelas do banco de dados `[CRS].[dbo]`, conten
 - `idEmissor` BIGINT NOT NULL — Emissor
 - `vlExposicao` FLOAT NOT NULL — Volume financeiro em risco / exposição total
 - `vlDisponivel` FLOAT NOT NULL — Margem disponível de limite
+
+---
+
+### 0032 — `tCRS_0032_LimitesAprovacao`
+**Sem PK definida**
+- `idSolicitacao` BIGINT NOT NULL — Identificador da solicitação de crédito (`tCRS_0016_SolicitacoesAlcada`)
+- `cdUserAprovador` VARCHAR(100) NOT NULL — Login/código do usuário aprovador (`tCRS_0001_UsuarioCadastro`)
+- `dsAlcada` VARCHAR(100) NOT NULL — Alçada de deliberação (`Mesa de Gestão`, `Comitê de Crédito IAM`, `Comitê Superior de Crédito`)
+- `dtAprovacao` DATETIME2 NOT NULL — Data e hora do registro da aprovação individual
+- `vlPeso` FLOAT NOT NULL — Peso ponderado do voto/aprovação do usuário
+

@@ -17,7 +17,7 @@ query_get_solicitacoes_finalizadas = lambda database, mesa: f"""
     LEFT JOIN {database}.dbo.tCRS_0001_UsuarioCadastro E ON A.cdUser = E.cdUser
     LEFT JOIN {database}.dbo.tCRS_0018_SolicitacoesAlcadaResposta F ON A.idSolicitacao = F.idSolicitacao
     WHERE {"A.cdMesa IN ('PRIVATE MARKETS', 'MESA CORE')" if mesa == 'ADMIN' else f"A.cdMesa = '{mesa}'"}
-      AND (C.dsStatus IN ('Aprovado', 'Rejeitado') OR A.idStatus IN (4, 6))
+      AND (C.dsStatus IN ('Aprovado', 'Rejeitado', 'Cancelado') OR A.idStatus IN (4, 5, 6))
 
 """
 

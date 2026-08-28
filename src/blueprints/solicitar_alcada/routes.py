@@ -1,6 +1,6 @@
 # Importações do projeto
+from bll.solicitar_alcada.tratamentos import obtem_eventos_disponiveis, realiza_insert_solicitacao_alcada, obtem_detalhes_solicitacao_completa, realiza_update_solicitacao_alcada
 from models.models_solicitar_alcada import GetTipoEventosModel, GetRatingsDistintosModel, GetLimitesGrupoEconomicoModel, GetDisponivelFlexibilizacaoModel
-from bll.solicitar_alcada.tratamentos import obtem_eventos_disponiveis, realiza_insert_solicitacao_alcada
 from services.solicitar_alcada.insumos import InsumosSolicitarAlcada
 from utils.api_functions import apply_model_dataclass
 
@@ -58,7 +58,18 @@ def obtem_disponivel_flexibilizacao_grupo_economico():
     except Exception as e:
         return jsonify({'Erro ao obter os limites aprovados para o grupo': str(e)}), 500
 
-# _______________________________ Insert _______________________________
+
+@solicitar_alcada.route('/obtem-detalhes-solicitacao', methods=['GET'])
+def obtem_detalhes_solicitacao():
+    try:
+        database = current_app.config['DATABASE']
+        id_solicitacao = int(request.args.get('idSolicitacao'))
+        dados = obtem_detalhes_solicitacao_completa(database, id_solicitacao)
+        return jsonify(dados), 200
+    except Exception as e:
+        return jsonify({'Erro ao obter detalhes da solicitação': str(e)}), 500
+
+# _______________________________ Insert e Update _______________________________
 
 @solicitar_alcada.route('/insert-solicitacao-alcada', methods=['POST'])
 def insert_solicitacao_alcada():
@@ -69,3 +80,15 @@ def insert_solicitacao_alcada():
         return jsonify({'message': 'Solicitação de alçada recebida com sucesso.'}), 200
     except Exception as e:
         return jsonify({'Erro ao receber solicitação de alçada': str(e)}), 500
+
+
+@solicitar_alcada.route('/update-solicitacao-alcada', methods=['POST'])
+def update_solicitacao_alcada():
+    try:
+        database = current_app.config['DATABASE']
+        payload = request.json
+        realiza_update_solicitacao_alcada(database, payload)
+        return jsonify({'message': 'Solicitação de alçada atualizada com sucesso.'}), 200
+    except Exception as e:
+        return jsonify({'Erro ao atualizar solicitação de alçada': str(e)}), 500
+

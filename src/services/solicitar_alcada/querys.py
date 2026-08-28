@@ -162,3 +162,68 @@ query_insert_solicitacao_alcada_descricao = lambda database, id_solicitacao, id_
     )
 
 """
+
+# _______________________________ Consulta e Delete por ID _______________________________
+
+query_get_solicitacao_cabecalho_by_id = lambda database, id_solicitacao: f"""
+
+    SELECT 
+        A.idSolicitacao,
+        A.dtSolicitacao,
+        A.cdUser,
+        A.cdMesa,
+        A.idGrupo,
+        B.dsGrupo,
+        A.cdRatingGrupo,
+        A.vlShareDivida,
+        A.idStatus,
+        A.dsTipoEvento
+    FROM {database}.dbo.tCRS_0016_SolicitacoesAlcada A
+    LEFT JOIN {database}.dbo.tCRS_0006_GrupoEconomicoCadastro B ON A.idGrupo = B.idGrupo
+    WHERE A.idSolicitacao = {id_solicitacao}
+
+"""
+
+query_get_solicitacao_descricao_by_id = lambda database, id_solicitacao: f"""
+
+    SELECT 
+        A.idSolicitacao,
+        A.idEmissor,
+        B.dsEmissor,
+        A.cdRating,
+        A.vlPrazo,
+        A.vlTerceiros,
+        A.vlReservaTecnica,
+        A.icRunOff,
+        A.vlShareDivida,
+        A.icLimiteMeta,
+        CAST(A.dtVencimentoLimiteMeta AS DATE) AS dtVencimentoLimiteMeta
+    FROM {database}.dbo.tCRS_0017_SolicitacoesAlcadaDescricao A
+    LEFT JOIN {database}.dbo.tCRS_0007_EmissorCadastro B ON A.idEmissor = B.idEmissor
+    WHERE A.idSolicitacao = {id_solicitacao}
+    ORDER BY A.idEmissor, A.icLimiteMeta, A.vlPrazo
+
+"""
+
+query_delete_solicitacao_alcada_resposta = lambda database, id_solicitacao: f"""
+
+    DELETE FROM {database}.dbo.tCRS_0018_SolicitacoesAlcadaResposta
+    WHERE idSolicitacao = {id_solicitacao}
+
+"""
+
+query_delete_solicitacao_alcada_descricao = lambda database, id_solicitacao: f"""
+
+    DELETE FROM {database}.dbo.tCRS_0017_SolicitacoesAlcadaDescricao
+    WHERE idSolicitacao = {id_solicitacao}
+
+"""
+
+query_delete_solicitacao_alcada_cabecalho = lambda database, id_solicitacao: f"""
+
+    DELETE FROM {database}.dbo.tCRS_0016_SolicitacoesAlcada
+    WHERE idSolicitacao = {id_solicitacao}
+
+"""
+
+
